@@ -512,10 +512,12 @@ function closeAlert(alert)
 function showpassword()
 {
     var elem =  document.getElementById("loginPassowrd");
-    if(elem.type.toLocaleLowerCase() == 'text')
+    var icon =  document.getElementById("eyeIcon");
+    if(elem.type.toLocaleLowerCase() == 'text' && icon.className == 'bi bi-eye-slash')
     {
         elem.type = 'password';
-    }else{elem.type = 'text';}
+        icon.className = 'bi bi-eye';
+    }else{elem.type = 'text'; icon.className = 'bi bi-eye-slash';}
 }
 function logoutFormSubmit()
 {
