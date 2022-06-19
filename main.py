@@ -54,7 +54,7 @@ async def adminAuth(req:Request):
     resp = RedirectResponse('/admin',status_code=status.HTTP_302_FOUND)
     auth = db.authUser(db.db_connect(),user_dict)
     if (auth['Value'] and auth['auth']==1): 
-        resp.set_cookie(key="Token",value=t.create_access_token({"id":auth['id']},30),secure=False,httponly=True)
+        resp.set_cookie(key="Token",value=t.create_access_token({"id":auth['id']},30),secure=True,httponly=True)
     return resp
 
 @app.post('/tokenauth')
