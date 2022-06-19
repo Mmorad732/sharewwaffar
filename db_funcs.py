@@ -14,10 +14,10 @@ cloudinary.config(
 )
 
 def db_connect():
-        try:
-            return conn.connect(host="us-cdbr-east-05.cleardb.net",database="heroku_f4873a695e38634",user="b17e6f10ba95ab",password="e7b27c74") 
-        except conn.Error as e:
-            return e
+    try:
+        return conn.connect(host="us-cdbr-east-05.cleardb.net",database="heroku_f4873a695e38634",user="b17e6f10ba95ab",password="e7b27c74") 
+    except conn.Error as e:
+        return e
 
 async def createUser(connection,user):
     user['email'] = user['email'].lower()
