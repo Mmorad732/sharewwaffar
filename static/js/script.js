@@ -513,11 +513,11 @@ function showpassword()
 {
     var elem =  document.getElementById("loginPassowrd");
     var icon =  document.getElementById("eyeIcon");
-    if(elem.type.toLocaleLowerCase() == 'text' && icon.className == 'bi bi-eye-slash')
+    if(elem.type.toLocaleLowerCase() == 'text' && icon.className == 'bi bi-eye')
     {
         elem.type = 'password';
-        icon.className = 'bi bi-eye';
-    }else{elem.type = 'text'; icon.className = 'bi bi-eye-slash';}
+        icon.className = 'bi bi-eye-slash';
+    }else{elem.type = 'text'; icon.className = 'bi bi-eye';}
 }
 function logoutFormSubmit()
 {
