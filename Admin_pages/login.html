@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/static/css/style.css"/>
+    <script src="/static/js/script.js"></script>
+    </head>
+
+    <body class="login-page">
+        <main>
+    
+          <div class="login-block">
+            <h1>Admin</h1>
+    
+            <form action="/adminauth" method="post" id="loginForm">
+              <hr class="hr-xs">
+              <div class="form-group">
+                <div class="input-group">
+                  <span class="input-group-addon"><i class="fa fa-envelope ti-email"></i></span>
+                  <input type="text" class="form-control" placeholder="Your email address" name="email">
+                </div>
+              </div>
+              
+              <hr class="hr-xs">
+    
+              <div class="form-group">
+                <div class="input-group">
+                  <span class="input-group-addon"><i class="fa fa-lock ti-unlock"></i></span>
+                  <input type="password" class="form-control" placeholder="Password" name="password" id="loginPassowrd">
+                  <i class="fa fa-eye" aria-hidden="true" onclick="showpassword()"></i>
+                </div>
+              </div>
+    
+              <button class="btn btn-primary btn-block" type="submit">Sign in</button>
+            </form>
+          </div>
+    
+        </main>
+    </body>
+</html>
