@@ -13,11 +13,6 @@ cloudinary.config(
   
 )
 
-# def db_connect():
-#         try:
-#             return conn.connect(host="localhost",user="root",password="root1234",database="Test_db")
-#         except conn.Error as e:
-#             return e
 def db_connect():
         try:
             return conn.connect(host="us-cdbr-east-05.cleardb.net",database="heroku_f4873a695e38634",user="b17e6f10ba95ab",password="e7b27c74") 
