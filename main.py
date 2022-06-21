@@ -1,4 +1,5 @@
 from fastapi import FastAPI , Request
+from fastapi.responses import JSONResponse
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
@@ -24,9 +25,20 @@ app.add_middleware(
 )
 # User
 @app.post('/User')
-async def logout(req:Request):
-    
-    return {"Value":True,"Message":'Okkk'}
+async def login(req:Request):
+    content = {"message": "Come to the dark side, we have cookies"}
+    response = JSONResponse(content=content)
+    response.set_cookie(key="fakesession", value="fake-cookie-session-value")
+    return response
+    # user = await req.form()
+    # user_dict = {}
+    # for i in user:
+    #     user_dict[i] = user[i]
+    # resp = RedirectResponse('/admin',status_code=status.HTTP_302_FOUND)
+    # auth = db.authUser(db.db_connect(),user_dict)
+    # if (auth['Value'] and auth['auth']==1): 
+    #     resp.set_cookie(key="Token",value=t.create_access_token({"id":auth['id']},30),secure=True,httponly=True)
+    # return resp
 
 # Admin
 @app.get('/admin')
