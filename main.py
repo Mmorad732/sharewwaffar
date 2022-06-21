@@ -44,6 +44,12 @@ async def login(req:Request):
     resp = JSONResponse(content = {"Value":False,"Message": "UnAuthorized"})
     return resp
 
+@app.post('/logout')
+async def logout(req:Request):
+    return JSONResponse(content = {"Value":True,"Message": "Logged out"})
+
+
+
 # Admin
 @app.get('/admin')
 async def index(req:Request):
