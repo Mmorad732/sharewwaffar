@@ -29,7 +29,7 @@ async def login(req:Request):
     user = await req.json()
     auth = db.authUser(db.db_connect(),user)
     if (auth['Value'] and auth['auth']==2): 
-        resp = JSONResponse(content = {"Value":True,"message": "Authorizes"})
+        resp = JSONResponse(content = {"Value":True,"message": "Authorized"})
         resp.set_cookie(key="Token",value=t.create_access_token({"id":auth['id']},5),secure=True,httponly=True)
     else:
         resp = JSONResponse(content = {"Value":False,"message": "UnAuthorizes"})
