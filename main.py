@@ -24,7 +24,7 @@ app.add_middleware(
     # allow_headers=["*"]
 )
 # User
-@app.post('/User')
+@app.post('/user')
 async def login(req:Request):
     content = {"message": "Come to the dark side, we have cookies"}
     response = JSONResponse(content=content)
