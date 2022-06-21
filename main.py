@@ -60,7 +60,7 @@ async def index(req:Request):
             
     return HTMLResponse(pkg_resources.resource_string(__name__, 'Admin_pages/login.html')) 
    
-@app.post('/logout')
+@app.post('/adminLogout')
 async def logout(req:Request):
     respo = RedirectResponse('/admin', status_code=status.HTTP_302_FOUND)
     if(bool(req.cookies)):
