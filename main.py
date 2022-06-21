@@ -23,7 +23,7 @@ app.add_middleware(
     # allow_headers=["*"]
 )
 # User
-@app.post('/logout')
+@app.post('/User')
 async def logout(req:Request):
     
     return {"Value":True,"Message":'Okkk'}
