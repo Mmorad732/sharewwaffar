@@ -17,12 +17,12 @@ templates = Jinja2Templates(directory="Admin_pages/")
 app = FastAPI()
 app.mount("/static", StaticFiles(directory=pkg_resources.resource_filename(__name__, 'static')), name="static")
 app.add_middleware(
-    # HTTPSRedirectMiddleware
-    CORSMiddleware,
-    allow_origins= ["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"]
+    HTTPSRedirectMiddleware
+    # CORSMiddleware,
+    # allow_origins= ["*"],
+    # allow_credentials=True,
+    # allow_methods=["*"],
+    # allow_headers=["*"]
 )
 # User
 @app.post('/user')
@@ -31,7 +31,7 @@ async def login(req:Request):
         user = await req.json()
         auth = db.authUser(db.db_connect(),user)
         if (auth['Value'] and auth['auth']==2): 
-            resp = JSONResponse(content = {"Value":True,"message": "Authorized"})
+            resp = JSONResponse(content = {"Value":True,"Message": "Authorized"})
             resp.set_cookie(key="Token",value=t.create_access_token({"id":auth['id']},5),secure=True,httponly=True)
             return resp
     else:
@@ -39,9 +39,9 @@ async def login(req:Request):
         if tok['Value']:
             auth = await db.getIdFromdb(db.db_connect(),'user',tok['id'],'authorization')
             if auth['Value'] and auth['Result']['authorization']==2:
-                resp = JSONResponse(content = {"Value":True,"message": "Authorized token"}) 
+                resp = JSONResponse(content = {"Value":True,"Message": "Authorized token"}) 
                 return resp
-    resp = JSONResponse(content = {"Value":False,"message": "UnAuthorized"})
+    resp = JSONResponse(content = {"Value":False,"Message": "UnAuthorized"})
     return resp
 
 # Admin
