@@ -22,6 +22,11 @@ app.add_middleware(
     # allow_methods=["*"],
     # allow_headers=["*"]
 )
+# User
+@app.post('/logout')
+async def logout(req:Request):
+    
+    return {"Value":True,"Message":'Okkk'}
 
 # Admin
 @app.get('/admin')
