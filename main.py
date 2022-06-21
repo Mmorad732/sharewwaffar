@@ -26,19 +26,14 @@ app.add_middleware(
 # User
 @app.post('/user')
 async def login(req:Request):
-    content = {"message": "Come to the dark side, we have cookies"}
-    response = JSONResponse(content=content)
-    response.set_cookie(key="fakesession", value="fake-cookie-session-value")
-    return response
-    # user = await req.form()
-    # user_dict = {}
-    # for i in user:
-    #     user_dict[i] = user[i]
-    # resp = RedirectResponse('/admin',status_code=status.HTTP_302_FOUND)
-    # auth = db.authUser(db.db_connect(),user_dict)
-    # if (auth['Value'] and auth['auth']==1): 
-    #     resp.set_cookie(key="Token",value=t.create_access_token({"id":auth['id']},30),secure=True,httponly=True)
-    # return resp
+    user = await req.json()
+    auth = db.authUser(db.db_connect(),user)
+    if (auth['Value'] and auth['auth']==2): 
+        resp = JSONResponse(content = {"Value":True,"message": "Authorizes"})
+        resp.set_cookie(key="Token",value=t.create_access_token({"id":auth['id']},5),secure=True,httponly=True)
+    else:
+        resp = JSONResponse(content = {"Value":False,"message": "UnAuthorizes"})
+    return resp
 
 # Admin
 @app.get('/admin')
