@@ -21,7 +21,7 @@ var userCard = {
     body_end : '</div>',
     
 
-    foot_begin : '<div class="card-footer text-center">',
+    foot_begin : '<div class="card-footer text-center overflow-auto">',
     edit_btn:'<button type="button" class="btn btn-success"',
     edit_btn_onclick : 'onclick="editItem(',
     edit_btn_onclick_value:'',
@@ -46,7 +46,7 @@ var imCard = {
     image : '',
     img_end : 'class="card-img-top">',
 
-    head_begin : '<div class="card-header text-center" >',
+    head_begin : '<div class="card-header text-center overflow-auto" >',
     id_tag:'ID : ',
     id: '',
     name_tage:'<br>Name : ',
@@ -66,7 +66,7 @@ var imCard = {
     offer : '',
     body_end : '</div>',
 
-    foot_begin : '<div class="card-footer text-center">',
+    foot_begin : '<div class="card-footer text-center overflow-auto">',
     cc_tag:'Carts : ',
     cart_count : '',
     pc_tag:'<br>Purchases : ',
