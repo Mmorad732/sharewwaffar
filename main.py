@@ -27,28 +27,32 @@ app.add_middleware(
 # User
 @app.post('/user')
 async def login(req:Request):
-    if not bool(req.cookies) or bool(await req.body()):
+    if bool(await req.body()):
         user = await req.json()
         auth = db.authUser(db.db_connect(),user)
         if (auth['Value'] and auth['auth']==2): 
-            resp = JSONResponse(content = {"Value":True,"Message": "Authorized"})
+            resp = JSONResponse(content = {"Value":auth['Value'],"Message": auth['Message']})
             resp.set_cookie(key="Token",value=t.create_access_token({"id":auth['id']},5),secure=True,httponly=True)
             return resp
-    else:
+        else:
+            resp = JSONResponse(content = {"Value":auth['Value'],"Message": auth['Message']})
+            return resp
+    elif bool(req.cookies):
         tok = t.auth_token(req.cookies['Token'])
         if tok['Value']:
             auth = await db.getIdFromdb(db.db_connect(),'user',tok['id'],'authorization')
             if auth['Value'] and auth['Result']['authorization']==2:
-                resp = JSONResponse(content = {"Value":True,"Message": "Authorized token"}) 
+                resp = JSONResponse(content = {"Value":auth['Value'],"Message": "Authorized User"}) 
                 return resp
-    resp = JSONResponse(content = {"Value":False,"Message": "UnAuthorized"})
+    resp = JSONResponse(content = {"Value":True,"Message": "Guest"})
     return resp
 
 @app.post('/logout')
 async def logout(req:Request):
-    return JSONResponse(content = {"Value":True,"Message": "Logged out"})
-
-
+    respo = RedirectResponse('/user')
+    if(bool(req.cookies)):
+        respo.delete_cookie('Token')
+    return respo
 
 # Admin
 @app.get('/admin')
