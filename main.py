@@ -54,6 +54,16 @@ async def logout(req:Request):
         respo.delete_cookie('Token')
     return respo
 
+@app.post('/signup')
+async def signup(req:Request):
+    if bool(await req.body()):
+        user = await req.json()
+        resp = await db.createUser(db.db_connect(),user)
+        return resp
+    return {'Value':False,'Message':"Empty fields"}
+
+
+
 # Admin
 @app.get('/admin')
 async def index(req:Request):
