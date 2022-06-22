@@ -26,7 +26,7 @@ app.add_middleware(
 )
 # User
 @app.post('/user')
-async def login(req:Request):
+async def signin(req:Request):
     if bool(await req.body()):
         user = await req.json()
         auth = db.authUser(db.db_connect(),user)
