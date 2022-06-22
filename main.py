@@ -117,6 +117,20 @@ async def adminAuth(req:Request):
     except:
             return {'Value':False,'Meassage':"Error"}
 
+@app.post('/tokenauth')
+async def index(req:Request):
+    try:
+        if bool(req.cookies):
+            tok = t.auth_token(req.cookies['Token'])
+            if(tok['Value']):
+                if tok['Value']:    
+                    return {'Value':True , 'Message':"Authorized token"}
+                else:
+                    return {'Value':False , 'Message':"UnAuthorized"}
+        return {'Value':False ,'Message':"UnAuthorized"}
+    except:
+        return{'Value':False,'Message':"Error"}
+
 @app.post('/form')
 async def form(req:Request):
     try:
