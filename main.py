@@ -34,7 +34,7 @@ async def signin(req:Request):
             auth = await db.authUser(await db.db_connect(),user)
             if (auth['Value']): 
                 resp = JSONResponse(content = {"Value":auth['Value'],"Message": auth['Message']})
-                resp.set_cookie(key="Token",value=t.create_access_token({"id":auth['id'],"role":auth['auth']},0.5),secure=True,httponly=True)
+                resp.set_cookie(key="Token",value=t.create_access_token({"id":auth['id'],"role":auth['auth']},180),secure=True,httponly=True)
                 return resp
             else:
                 resp = JSONResponse(content = {"Value":auth['Value'],"Message": auth['Message']})
@@ -53,8 +53,7 @@ async def signin(req:Request):
         return resp
     except:
         return {'Value':False ,'Message':"Error"}
-    
-
+  
 @app.post('/logout')
 async def logout(req:Request):
     try:
