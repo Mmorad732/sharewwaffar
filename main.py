@@ -32,7 +32,7 @@ async def signin(req:Request):
         if bool(await req.body()):
             user = await req.json()
             auth = await db.authUser(await db.db_connect(),user)
-            if (auth['Value'] and auth['auth']==2): 
+            if (auth['Value']): 
                 resp = JSONResponse(content = {"Value":auth['Value'],"Message": auth['Message']})
                 resp.set_cookie(key="Token",value=t.create_access_token({"id":auth['id'],"role":auth['auth']},60),secure=True,httponly=True)
                 return resp
@@ -41,11 +41,9 @@ async def signin(req:Request):
                 return resp
         elif bool(req.cookies):
             tok = t.auth_token(req.cookies['Token'])
-            if tok['Value']:
-                auth = await db.getIdFromdb(await db.db_connect(),'user',tok['id'],'authorization')
-                if auth['Value'] and tok['role']==1:
-                    resp = JSONResponse(content = {"Value":auth['Value'],"Message": "Authorized User"}) 
-                    return resp
+            if tok['Value'] and tok['role']==2:
+                resp = JSONResponse(content = {"Value":auth['Value'],"Message": "Authorized User"}) 
+                return resp
         resp = JSONResponse(content = {"Value":True,"Message": "Guest"})
         return resp
     except:
