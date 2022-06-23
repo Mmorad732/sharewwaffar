@@ -17,12 +17,12 @@ templates = Jinja2Templates(directory="Admin_pages/")
 app = FastAPI()
 app.mount("/static", StaticFiles(directory=pkg_resources.resource_filename(__name__, 'static')), name="static")
 app.add_middleware(
-    HTTPSRedirectMiddleware
-    # CORSMiddleware,
-    # allow_origins= ["*"],
-    # allow_credentials=True,
-    # allow_methods=["*"],
-    # allow_headers=["*"]
+    # HTTPSRedirectMiddleware
+    CORSMiddleware,
+    allow_origins= ["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
 )
 
 # User
@@ -34,7 +34,7 @@ async def signin(req:Request):
             auth = await db.authUser(await db.db_connect(),user)
             if (auth['Value']): 
                 resp = JSONResponse(content = {"Value":auth['Value'],"Message": auth['Message']})
-                resp.set_cookie(key="Token",value=t.create_access_token({"id":auth['id'],"role":auth['auth']},60),secure=True,httponly=True)
+                resp.set_cookie(key="Token",value=t.create_access_token({"id":auth['id'],"role":auth['auth']},0.5),secure=True,httponly=True)
                 return resp
             else:
                 resp = JSONResponse(content = {"Value":auth['Value'],"Message": auth['Message']})
@@ -42,12 +42,14 @@ async def signin(req:Request):
         elif bool(req.cookies):
             tok = t.auth_token(req.cookies['Token'])
             if tok['Value'] and tok['role']==2:
-                resp = JSONResponse(content = {"Value":auth['Value'],"Message": "Authorized User"}) 
+                resp = JSONResponse(content = {"Value":tok['Value'],"Message": "Authorized User"}) 
+                resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                 return resp
         resp = JSONResponse(content = {"Value":True,"Message": "Guest"})
         return resp
     except:
-        return {'Value':False,'Meassage':"Error"}
+        return {'Value':False ,'Message':"Error"}
+    
 
 @app.post('/logout')
 async def logout(req:Request):
