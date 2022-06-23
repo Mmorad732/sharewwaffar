@@ -19,8 +19,8 @@ def create_access_token(data: dict , time:float):
 def auth_token(token: str = Depends(oauth2_scheme)):
     try:
             payload = jwt.decode(token,SECRET_KEY, ALGORITHM)
-            return {"Value": True , "Message":"Signed token" , "id": payload["id"]}
+            return {'Value': True , 'Message':"Signed token" , 'id': payload['id'],'role':payload['role']}
     except JWTError:
-            return {"Value": False , "Message":"Unauthorized token"}
+            return {'Value': False , 'Message':"Unauthorized token"}
     
 

@@ -13,7 +13,7 @@ cloudinary.config(
   
 )
 
-def db_connect():
+async def db_connect():
     try:
         return conn.connect(host="us-cdbr-east-05.cleardb.net",database="heroku_f4873a695e38634",user="b17e6f10ba95ab",password="e7b27c74") 
     except conn.Error as e:
@@ -50,7 +50,7 @@ async def createUser(connection,user):
     else:
         return email_val
 
-def getFromdb(connection,table):
+async def getFromdb(connection,table):
     try:
             with connection.cursor(dictionary=True,buffered=True) as cursor:
                 cursor.execute("SELECT * FROM "+table)
@@ -90,7 +90,7 @@ def getFromdb(connection,table):
     except conn.Error as e:
             return {'Value':False,'Result':"Error"}
 
-def authUser(connection,userInfo):
+async def authUser(connection,userInfo):
     check_query = ("SELECT * FROM user WHERE email = %s")
     try:
             with connection.cursor(dictionary=True,buffered = True) as cursor:
@@ -111,6 +111,7 @@ def authUser(connection,userInfo):
                     return check_pass
             
     except conn.Error as e:
+            print(e)
             return {'Value':False,'Message':'Error'}
 
 async def insertIntoTable(connection,content):

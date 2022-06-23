@@ -473,7 +473,7 @@ async function insertIntoTable(table)
             {
                 alertMsg(result,document.getElementById("insertAlert"));
                 resetInputForm();
-                fetchTable(table);
+                await fetchTable(table);
             }else if(result['Value']==401)
             {
                 location.reload(true);
