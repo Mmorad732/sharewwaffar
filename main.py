@@ -45,6 +45,10 @@ async def signin(req:Request):
                 resp = JSONResponse(content = {"Value":tok['Value'],"Message": "Authorized User"}) 
                 resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                 return resp
+            else:
+                resp = JSONResponse(content = {"Value":True,"Message": "Guest"})
+                resp.delete_cookie('Token')
+                return resp
         resp = JSONResponse(content = {"Value":True,"Message": "Guest"})
         return resp
     except:
