@@ -1,4 +1,3 @@
-from urllib import request
 from fastapi import FastAPI , Request
 from fastapi.responses import JSONResponse
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -6,10 +5,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 import tokenfns as t
 import db_funcs as db
+import reccomender 
 from fastapi.staticfiles import StaticFiles
 import pkg_resources
 import starlette.status as status
 from fastapi.templating import Jinja2Templates
+
+
 
 templates = Jinja2Templates(directory="Admin_pages/")
 
@@ -74,6 +76,13 @@ async def signup(req:Request):
         return {'Value':False,'Message':"Empty fields"}
     except:
             return {'Value':False,'Meassage':"Error"}
+
+# @app.get('/test')
+# async def index():
+#     df = await db.getDataFrame(await db.db_connect())
+#     reccomender.featureMatrix(df)
+#     print(reccomender.recommendations(334,df,3))
+
 
 
 

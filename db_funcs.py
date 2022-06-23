@@ -1,8 +1,10 @@
+from unittest import result
 import mysql.connector as conn
 import help_funcs as hf
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
+import pandas as pd
 
 
 cloudinary.config( 
@@ -53,37 +55,39 @@ async def createUser(connection,user):
 async def getFromdb(connection,table):
     try:
             with connection.cursor(dictionary=True,buffered=True) as cursor:
-                cursor.execute("SELECT * FROM "+table)
-                connection.commit()
-                result = cursor.fetchall()
+                
                 if(table.lower()=='product'):
-                    for i in range(len(result)):
-                        cursor.execute("SELECT name FROM category WHERE id =%s",[result[i]['category']])
-                        connection.commit()
-                        res = cursor.fetchone()
-                        result[i]['category'] = res['name']
-
-                        cursor.execute("SELECT name FROM supplier WHERE id =%s",[result[i]['supplier']])
-                        connection.commit()
-                        res = cursor.fetchone()
-                        result[i]['supplier'] = res['name']
-
-                        cursor.execute("SELECT name FROM brand WHERE id =%s",[result[i]['brand']])
-                        connection.commit()
-                        res = cursor.fetchone()
-                        result[i]['brand'] = res['name'] 
-
-                        cursor.execute("SELECT * FROM offer WHERE id =%s",[result[i]['offer']])
-                        connection.commit()
-                        res = cursor.fetchone()
-                        result[i]['offer'] = str(res['quantity'])+' - '+str(res['discount'])+'%'
+                    cursor.execute(
+                      " SELECT product.id,product.image,product.name,product.price,\
+                        product.cart_count,product.purch_count,product.wl_count,\
+                        category.name AS category,brand.name AS brand ,supplier.name AS supplier, \
+                        offer.quantity AS quantity, offer.discount AS discount \
+                        FROM product \
+                        JOIN category ON product.category = category.id \
+                        JOIN brand ON product.brand = brand.id \
+                        JOIN supplier ON product.supplier = supplier.id \
+                        JOIN offer ON product.offer = offer.id "
+                    )
+                    connection.commit()
+                    result = cursor.fetchall()
+                    for prod in result:
+                        prod['offer'] = str(prod.pop('quantity'))+' - '+str(prod.pop('discount'))+'%'
+                   
 
                 elif(table.lower()=='user'):
-                    for i in range(len(result)):
-                        cursor.execute("SELECT authorization FROM authorization WHERE id =%s",[result[i]['authorization']])
-                        connection.commit()
-                        res = cursor.fetchone()
-                        result[i]['authorization'] = res['authorization']
+                    cursor.execute(
+                        ' SELECT user.id,user.email,user.first_name,user.last_name,\
+                          user.address, authorization.authorization AS authorization \
+                          FROM user \
+                          JOIN authorization ON user.authorization = authorization.id'
+                        )
+                    connection.commit()
+                    result = cursor.fetchall()
+                        
+                else:
+                    cursor.execute("SELECT * FROM "+table)
+                    connection.commit()
+                    result = cursor.fetchall()
                 cursor.close()
                 connection.close()
                 return {'Value':True,'Result':result}
@@ -340,3 +344,33 @@ async def deleteIm(im):
         return del_resp
     except:
         return ""
+
+async def getDataFrame(connection):
+    try:
+        with connection.cursor(dictionary=True,buffered = True) as cursor:
+            query =('SELECT product.id, product.name,category.name AS category,brand.name AS brand '+
+                    'FROM product '+
+                    'JOIN category ON product.category = category.id '+
+                    'JOIN brand ON product.brand = brand.id')
+            cursor.execute(query)
+            connection.commit()
+            result = cursor.fetchall()            
+            cursor.close()
+            connection.close()
+            df = pd.DataFrame.from_records(result)
+            return df
+    except conn.Error as e:
+            return {'Value':False,'Result':"Error"}
+            
+
+
+
+# SELECT
+#   student.first_name,
+#   student.last_name,
+#   course.name
+# FROM student
+# JOIN student_course
+#   ON student.id = student_course.student_id
+# JOIN course
+#   ON course.id = student_course.course_id;
