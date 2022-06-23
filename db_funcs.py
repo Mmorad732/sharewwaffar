@@ -111,7 +111,6 @@ async def authUser(connection,userInfo):
                     return check_pass
             
     except conn.Error as e:
-            print(e)
             return {'Value':False,'Message':'Error'}
 
 async def insertIntoTable(connection,content):
