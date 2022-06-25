@@ -559,8 +559,8 @@ async def getHist(connection,prod,cond):
 async def addDeal(connection,content):
     try:
         with connection.cursor(dictionary = True,buffered = True) as cursor:
-            check_query = ('SELECT * FROM deal WHERE start_date in (%s,%s) or end_date in (%s,%s) and product = %s')
-            cursor.execute(check_query,[content['start_date'],content['end_date'],content['start_date'],content['end_date'],content['product']])
+            check_query = ('SELECT * FROM deal WHERE start_date = %s or end_date in (%s,%s) and product = %s')
+            cursor.execute(check_query,[content['start_date'],content['start_date'],content['end_date'],content['product']])
             connection.commit()
             row_count = cursor.rowcount
             if row_count >= 1:   
@@ -575,9 +575,7 @@ async def addDeal(connection,content):
             connection.close()
             return {'Value':True, 'Message':"Created successfuly"}
     except conn.Error as e:
-            if('image' in content.keys()):
-                await deleteIm(content['image'])
-            return {'Value':False, 'Message':"Error"}
+            return {'Value':False, 'Message':"Error11"}
     
 async def addNotifications(connection, content):
     try:
