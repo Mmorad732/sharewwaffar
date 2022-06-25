@@ -23,12 +23,12 @@ templates = Jinja2Templates(directory="Admin_pages/")
 app = FastAPI()
 app.mount("/static", StaticFiles(directory=pkg_resources.resource_filename(__name__, 'static')), name="static")
 app.add_middleware(
-    HTTPSRedirectMiddleware
-    # CORSMiddleware,
-    # allow_origins= ["*"],
-    # allow_credentials=True,
-    # allow_methods=["*"],
-    # allow_headers=["*"]
+    # HTTPSRedirectMiddleware
+    CORSMiddleware,
+    allow_origins= ["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
 )
 
 # User
@@ -155,7 +155,7 @@ async def addToCart(req:Request):
                                                 deal_content = {'product':int(cart_item['prod_id']),'quantity':product_fetch['Result']['quantity'],'discount':product_fetch['Result']['discount'],'start_date':str(date.today()),'end_date':str(date.today()+timedelta(days=1))}
                                                 deal_result = await db.addDeal(await db.db_connect(),deal_content)
                                                 if deal_result['Value']:
-                                                    if bool(deal_result['Result']):
+                                                    if 'Result' in deal_result.keys():
                                                         endDate = deal_result['Result']['end_date']
                                                     else:
                                                         endDate = deal_content['end_date']
@@ -267,7 +267,7 @@ async def updateCartItem(req:Request):
                                     deal_content = {'product':int(cart_item['prod_id']),'quantity':product_fetch['Result']['quantity'],'discount':product_fetch['Result']['discount'],'start_date':str(date.today()),'end_date':str(date.today()+timedelta(days=1))}
                                     deal_result = await db.addDeal(await db.db_connect(),deal_content)
                                     if deal_result['Value']:
-                                        if bool(deal_result['Result']):
+                                        if 'Result' in deal_result.keys():
                                             endDate = deal_result['Result']['end_date']
                                         else:
                                             endDate = deal_content['end_date']
@@ -292,7 +292,7 @@ async def updateCartItem(req:Request):
         return resp    
 
     except:
-        resp = JSONResponse(content = {'Value':False,'Message': "Error1"}) 
+        resp = JSONResponse(content = {'Value':False,'Message': "Error"}) 
         if bool(req.cookies) and bool(req.cookies['Token']):
             resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
         return resp                       
@@ -326,7 +326,7 @@ async def addToWishList(req:Request):
                                             deal_content = {'product':int(wl_item['prod_id']),'quantity':product_fetch['Result']['quantity'],'discount':product_fetch['Result']['discount'],'start_date':str(date.today()),'end_date':str(date.today()+timedelta(days=1))}
                                             deal_result = await db.addDeal(await db.db_connect(),deal_content)
                                             if deal_result['Value']:
-                                                if bool(deal_result['Result']):
+                                                if 'Result' in deal_result.keys():
                                                     endDate = deal_result['Result']['end_date']
                                                 else:
                                                     endDate = deal_content['end_date']
