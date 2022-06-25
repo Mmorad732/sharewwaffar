@@ -1,10 +1,9 @@
-from unittest import result
 import mysql.connector as conn
 import help_funcs as hf
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
-import pandas as pd
+
 
 
 cloudinary.config( 
@@ -77,7 +76,7 @@ async def getFromdb(connection,table):
                 elif(table.lower()=='user'):
                     cursor.execute(
                         ' SELECT user.id,user.email,user.first_name,user.last_name,\
-                          user.address, authorization.authorization AS authorization \
+                          user.address,user.wallet, authorization.authorization AS authorization \
                           FROM user \
                           JOIN authorization ON user.authorization = authorization.id'
                         )
@@ -98,7 +97,7 @@ async def authUser(connection,userInfo):
     check_query = ("SELECT * FROM user WHERE email = %s")
     try:
             with connection.cursor(dictionary=True,buffered = True) as cursor:
-                cursor.execute(check_query, [userInfo['email']] )
+                cursor.execute(check_query, [userInfo['email']])
                 connection.commit()
                 row_count = cursor.rowcount
                 if row_count == 0:    
@@ -110,7 +109,8 @@ async def authUser(connection,userInfo):
                 connection.close() 
                 check_pass = hf.password_verify(user['password'],userInfo['password'])
                 if check_pass['Value']:
-                    return {'Value':True,'Message':"Authorized",'id':user['id'],'auth':user['authorization']}
+                    user.pop('password')
+                    return {'Value':True,'Message':"Authorized",'id':user.pop('id'),'auth':user.pop('authorization'),'user':user}
                 else:
                     return check_pass
             
@@ -125,17 +125,17 @@ async def insertIntoTable(connection,content):
             return resp
         else:
             try:
-                with connection.cursor(buffered = True) as cursor:
+                with connection.cursor(dictionary = True,buffered = True) as cursor:
                     cond,val = makeCond(content)
                     check_query = ('SELECT * FROM '+ table +' WHERE '+cond)
                     cursor.execute(check_query, val)
                     connection.commit()
                     row_count = cursor.rowcount
-                    if row_count >= 1:    
+                    if row_count >= 1:
                         cursor.close()
                         connection.close()
-                        return {'Value':False, 'Message':table+" already exist"}
-                    insert_query,values = await makeInsertQuery(content,table)  
+                        return {'Value':False, 'Message':table+" already exists"}
+                    insert_query,values = await makeInsertQuery(content,table) 
                     cursor.execute(insert_query, values)
                     connection.commit()
                     cursor.close()
@@ -144,17 +144,23 @@ async def insertIntoTable(connection,content):
             except conn.Error as e:
                     if('image' in content.keys()):
                         await deleteIm(content['image'])
-                    return {'Value':False, 'Message':"Error 1"}
+                    return {'Value':False, 'Message':"Error"}
     else:
-        return {'Value':False, 'Message':"Error 1"}
+        return {'Value':False, 'Message':"Error"}
 
 def makeCond(content):
     count = 0
     values = []
     cond = ''
     im = ''
+    price = ''
+    quantity = ''
     if 'image' in content:
         im = content.pop('image')
+    if 'price' in content:
+        price = content.pop('price')
+    if 'quantity' in content:
+        quantity = content.pop('quantity')
     for key,val in content.items():
         if count == len(content)-1:
             cond += key+"= %s"
@@ -163,6 +169,10 @@ def makeCond(content):
             cond += key+"= %s and "
             values.append(val)
         count += 1
+    if(bool(quantity)):
+        content['quantity'] = quantity
+    if(bool(price)):
+        content['price'] = price
     if(bool(im)):
         content['image'] = im
     return cond,values
@@ -250,31 +260,33 @@ async def updateItem(connection,content,id):
     table = content.pop('table')
     try:
         with connection.cursor(dictionary = True, buffered = True) as cursor:
-            
-            if (table.lower() == 'product'):
-                get_query = ('SELECT name,supplier FROM '+ table +' WHERE id = %s')
-            elif(table.lower() == 'user'):
-                get_query = ('SELECT email FROM '+ table +' WHERE id = %s')
-            else:
-                get_query = ('SELECT * FROM '+ table +' WHERE id = %s')
-            cursor.execute(get_query, [id])
-            connection.commit()
-            result = cursor.fetchone()
-            if('id' in result):
-                result.pop('id')
-            for k,v in content.items():
-                if k in result:
-                    result[k] = v
-            cond,val = makeCond(result)
-            check_query = ('SELECT * FROM ' + table + ' WHERE ' + cond + ' and id != %s')
-            val.append(str(id))
-            cursor.execute(check_query,val)
-            connection.commit()
-            row_count = cursor.rowcount
-            if row_count > 0:    
-                cursor.close()
-                connection.close()
-                return {'Value':False, 'Message':table+" already exist"}
+            try:
+                if (table.lower() == 'product'):
+                    get_query = ('SELECT name,supplier FROM '+ table +' WHERE id = %s')
+                elif(table.lower() == 'user'):
+                    get_query = ('SELECT email FROM '+ table +' WHERE id = %s')
+                else:
+                    get_query = ('SELECT * FROM '+ table +' WHERE id = %s')
+                cursor.execute(get_query, [id])
+                connection.commit()
+                result = cursor.fetchone()
+                if('id' in result):
+                    result.pop('id')
+                for k,v in content.items():
+                    if k in result:
+                        result[k] = v
+                cond,val = makeCond(result)
+                check_query = ('SELECT * FROM ' + table + ' WHERE ' + cond + ' and id != %s')
+                val.append(str(id))
+                cursor.execute(check_query,val)
+                connection.commit()
+                row_count = cursor.rowcount
+                if row_count > 0:    
+                    cursor.close()
+                    connection.close()
+                    return {'Value':False, 'Message':table+" already exist"}
+            except conn.Error as e:
+                print(e)
             update_query,values = await makeUpdateQuery(content,table,id)
             cursor.execute(update_query,values)
             connection.commit()
@@ -302,7 +314,7 @@ async def makeUpdateQuery(content,table,id):
             q_body += key+"= %s,"
             values.append(val)
         count += 1
-    stmt = (update_query + q_body  + " WHERE id = " + id  )
+    stmt = (update_query + q_body  + " WHERE id = " + str(id)  )
     return stmt,values
 
 async def deleteById(connection, table , id):
@@ -344,33 +356,282 @@ async def deleteIm(im):
         return del_resp
     except:
         return ""
-
-async def getDataFrame(connection):
+            
+async def productQuery(connection,id):
     try:
-        with connection.cursor(dictionary=True,buffered = True) as cursor:
-            query =('SELECT product.id, product.name,category.name AS category,brand.name AS brand '+
-                    'FROM product '+
-                    'JOIN category ON product.category = category.id '+
-                    'JOIN brand ON product.brand = brand.id')
-            cursor.execute(query)
+        with connection.cursor(dictionary=True,buffered=True) as cursor:
+            
+            cursor.execute(
+                " SELECT product.price,product.cart_count,product.wl_count,\
+                    offer.quantity AS quantity, offer.discount AS discount \
+                    FROM product \
+                    JOIN offer ON product.offer = offer.id and product.id = %s",[id]
+                )
             connection.commit()
-            result = cursor.fetchall()            
+            row_count = cursor.rowcount
+            if row_count == 0:    
+                cursor.close()
+                connection.close()
+                return {'Value':False, 'Message':"Product not found"}
+            result = cursor.fetchone() 
             cursor.close()
             connection.close()
-            df = pd.DataFrame.from_records(result)
-            return df
-    except conn.Error as e:
-            return {'Value':False,'Result':"Error"}
+            return {'Value':True, 'Result':result}
             
+    except conn.Error as e:
+        return {'Value':False,'Message':"Error"}
 
+async def getFromList(connection,table,content):
+    delete_query = ('SELECT * FROM '+table+' WHERE user = %s and product = %s')     
+    try:
+        with connection.cursor(dictionary=True,buffered = True) as cursor:
+            cursor.execute(delete_query,[content['user'],int(content['product'])])
+            connection.commit()
+            row_count = cursor.rowcount
+            if row_count == 0:    
+                cursor.close()
+                connection.close()
+                return {'Value':False, 'Message':table+" item not Found"}
+            result = cursor.fetchone()
+            cursor.close()
+            connection.close()
+            return {'Value':True,'Result':result}
+    except conn.Error as e:
+        return {'Value':False, 'Message':'Error'}
 
+async def productIncDec(connection,content,op):
+    update_query = 'UPDATE product SET '+ content['column']+' = '+content['column']+' '+op +' '+content['quantity'] + ' WHERE id = %s'
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(update_query,[content['prod_id']])
+            connection.commit()
+            row_count = cursor.rowcount
+            if row_count == 0:    
+                cursor.close()
+                connection.close()
+                return {'Value':False, 'Message':"Product not Found"}
+            cursor.close()
+            connection.close()
+            return {'Value':True, 'Message':"Product Updated successfully"}
+    except conn.Error as e:
+        return {'Value':False, 'Message':'Error'}
 
-# SELECT
-#   student.first_name,
-#   student.last_name,
-#   course.name
-# FROM student
-# JOIN student_course
-#   ON student.id = student_course.student_id
-# JOIN course
-#   ON course.id = student_course.course_id;
+async def getListItems(connection,table,user):
+    try:
+        with connection.cursor(dictionary=True,buffered=True) as cursor:
+            if table.lower()=='cart':
+                cursor.execute(
+                            " SELECT product.id , product.image,product.name,\
+                            cart.quantity AS quantity, cart.price AS price \
+                            FROM cart \
+                            JOIN product ON cart.product = product.id and cart.user = %s",[user])
+            elif table.lower()=='wishlist':
+                cursor.execute(
+                            " SELECT product.id , product.image,product.name \
+                            FROM wishlist \
+                            JOIN product ON wishlist.product = product.id and wishlist.user = %s",[user])
+
+            connection.commit()
+            row_count = cursor.rowcount
+            if row_count == 0:    
+                cursor.close()
+                connection.close()
+                return {'Value':False, 'Message':"Empty "+table}
+            result = cursor.fetchall() 
+            cursor.close()
+            connection.close()
+            return {'Value':True, 'Result':result}
+    except conn.Error as e:
+        return {'Value':False,'Message':"Error"}
+
+async def getFilteredProducts(connection,cond = ''):
+    try:
+        with connection.cursor(dictionary=True,buffered=True) as cursor:
+            condition = ''
+            if len(cond)!=0:
+                if(('category' in cond) and not ('brand' in cond)):
+                    condition = ' AND (category.name = "'+str(cond['category'])+'" or category.id = "'+str(cond['category'])+'" ) '
+                elif(not ('category' in cond) and ('brand' in cond)):
+                    condition = ' AND (brand.name = "'+str(cond['brand'])+'" or brand.id = "'+str(cond['brand'])+'" ) '
+                elif(('category' in cond) and ('brand' in cond)):
+                    condition = ' AND (category.name = "'+str(cond['category'])+'" or category.id = "'+str(cond['category'])+'" ) ' + 'AND' \
+                        '(brand.name = "'+str(cond['brand'])+'" or brand.id = "'+str(cond['brand'])+'" ) '
+
+            cursor.execute(
+                " SELECT product.id,product.image,product.name,product.price,\
+                    category.name AS category,brand.name AS brand ,supplier.name AS supplier, \
+                    offer.quantity AS quantity, offer.discount AS discount \
+                    FROM product \
+                    JOIN category ON product.category = category.id \
+                    JOIN brand ON product.brand = brand.id "+condition+" \
+                    JOIN supplier ON product.supplier = supplier.id \
+                    JOIN offer ON product.offer = offer.id "
+                )
+            connection.commit()
+            if cursor.rowcount == 0:
+                cursor.close()
+                connection.close()
+                return {'Value':False,'Message':'No Products'}
+            result = cursor.fetchall()
+            for prod in result:
+                prod['offer'] = str(prod.pop('quantity'))+' - '+str(prod.pop('discount'))+'%'
+            return {'Value':True,'Result':result}
+    except conn.Error as e:
+        return {'Value':False,'Message':'Error'}
+
+async def getProduct(connection,id):
+    try:
+        with connection.cursor(dictionary=True,buffered=True) as cursor:
+
+            cursor.execute(
+                " SELECT product.id,product.image,product.name,product.price,\
+                    category.name AS category,brand.name AS brand ,supplier.name AS supplier, \
+                    offer.quantity AS quantity, offer.discount AS discount \
+                    FROM product \
+                    JOIN category ON product.category = category.id \
+                    JOIN brand ON product.brand = brand.id \
+                    JOIN supplier ON product.supplier = supplier.id \
+                    JOIN offer ON product.offer = offer.id  AND product.id = "+str(id)
+                )
+            connection.commit()
+            if cursor.rowcount == 0:
+                cursor.close()
+                connection.close()
+                return {'Value':False,'Message':'No Products'}
+            result = cursor.fetchone()
+            result['offer'] = str(result.pop('quantity'))+' - '+str(result.pop('discount'))+'%'
+            return {'Value':True,'Result':result}
+    except conn.Error as e:
+        return {'Value':False,'Message':'Error'}
+
+async def deleteHist(connection,user,prod,cond):
+    condition = ''
+    if cond.lower() == 'cart':
+        condition = 'cart'
+    elif cond.lower() == 'wishlist':
+        condition = 'wishlist' 
+    elif cond.lower() == 'purchase':
+        condition = 'purchase'    
+    delete_query = 'DELETE FROM history WHERE '+condition+' = %s and user = %s and product = %s' 
+    try:
+        with connection.cursor(dictionary=True,buffered = True) as cursor:
+            cursor.execute(delete_query,[1,user,prod])
+            connection.commit()
+
+            row_count = cursor.rowcount
+            if row_count == 0:    
+                cursor.close()
+                connection.close()
+                return {'Value':False, 'Message':"Error"}
+            cursor.close()
+            connection.close()
+            return {'Value':True, 'Message':"Deleted successfully"}
+    except conn.Error as e:
+            return {'Value':False, 'Message':'Error'}
+
+async def getHist(connection,prod,cond):
+    condition = ''
+    vals = []
+    if cond.lower() == 'interested':
+        condition = '(cart = %s or wishlist = %s)'
+        vals.append(1)
+        vals.append(1)
+    elif cond.lower() == 'purchase':
+        condition = 'purchase = %s'
+        vals.append(1)    
+    query = 'SELECT user FROM history WHERE '+condition+'  and product = %s'
+    vals.append(prod) 
+    try:
+        with connection.cursor(dictionary=True,buffered = True) as cursor:
+            cursor.execute(query,vals)
+            connection.commit()
+            row_count = cursor.rowcount
+            if row_count == 0:    
+                cursor.close()
+                connection.close()
+                return {'Value':False, 'Message':"Error"}
+            result = cursor.fetchall()
+            cursor.close()
+            connection.close()
+            return {'Value':True, 'Result':result}
+    except conn.Error as e:
+            return {'Value':False, 'Message':'Error'}
+
+async def addDeal(connection,content):
+    try:
+        with connection.cursor(dictionary = True,buffered = True) as cursor:
+            check_query = ('SELECT * FROM deal WHERE start_date in (%s,%s) or end_date in (%s,%s) and product = %s')
+            cursor.execute(check_query,[content['start_date'],content['end_date'],content['start_date'],content['end_date'],content['product']])
+            connection.commit()
+            row_count = cursor.rowcount
+            if row_count >= 1:   
+                result = cursor.fetchone()
+                cursor.close()
+                connection.close()
+                return {'Value':True, 'Result':result}
+            insert_query,values = await makeInsertQuery(content,'deal') 
+            cursor.execute(insert_query, values)
+            connection.commit()
+            cursor.close()
+            connection.close()
+            return {'Value':True, 'Message':"Created successfuly"}
+    except conn.Error as e:
+            if('image' in content.keys()):
+                await deleteIm(content['image'])
+            return {'Value':False, 'Message':"Error"}
+    
+async def addNotifications(connection, content):
+    try:
+        with connection.cursor(dictionary=True,buffered = True) as cursor:
+            check_query = ('SELECT user FROM notification WHERE product = %s and end_date = %s')
+            cursor.execute(check_query,[content[0]['product'],content[0]['end_date']])
+            connection.commit()
+            row_count = cursor.rowcount
+            if row_count > 0: 
+                if row_count == len(content):
+                    cursor.close()
+                    connection.close()
+                    return {'Value':False, 'Message':"Notifications already exists"}
+                else:
+                    result = cursor.fetchall()
+                    newres = []
+                    newcontent = []
+                    for res in range(len(result)):
+                        newres.append(result[res]['user'])
+                    for i in range(len(content)):
+                        if not int(content[i]['user']) in newres:
+                            newcontent.append(content[i])
+                    content = newcontent
+            
+            insert_query = 'INSERT INTO notification (user,product,message,end_date) \
+                values (%(user)s, %(product)s, %(message)s,%(end_date)s)'
+            if len(content)>0:
+                cursor.executemany(insert_query, content)
+                connection.commit()
+                cursor.close()
+                connection.close()
+                return {'Value':True, 'Message':"Notifications created successfuly"}
+            else:
+                cursor.close()
+                connection.close()
+                return {'Value':True, 'Message':"All user notified"}
+    except conn.Error as e:
+            return {'Value':False, 'Message':"Error"}
+
+async def getNotifications(connection, content):
+    try:
+        with connection.cursor(dictionary=True,buffered = True) as cursor:
+            check_query = ('SELECT message FROM notification WHERE user = %s and end_date >= %s')
+            cursor.execute(check_query,[content['user'],content['date']])
+            connection.commit()
+            row_count = cursor.rowcount
+            if row_count == 0:   
+                cursor.close()
+                connection.close()
+                return {'Value':False, 'Message':"No Notifications"}
+            result = cursor.fetchall() 
+            cursor.close()
+            connection.close()
+            return {'Value':True, 'Result':result}
+    except conn.Error as e:
+            return {'Value':False, 'Message':"Error"}

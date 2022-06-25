@@ -14,6 +14,8 @@ var userCard = {
     first_name : '' ,
     lname_tag:'<br>Last Name : ',
     last_name : '' ,
+    wallet_tag : '<br>Wallet : ',
+    wallet : '',
     address_tag:'<br>Address : ',
     address : '',
     auth_tag : '<br>Authorization : ',
@@ -133,7 +135,7 @@ async function fetchTable(table){
                 {  
                     if(i in userCard)
                     {
-                        userCard[i] = y['Result'][r][i];  
+                        userCard[i] = y['Result'][r][i];
                     }
                 }
                 userCard['edit_btn_onclick_value'] = "'"+table+"'"+','+userCard['id'];
