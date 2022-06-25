@@ -10,8 +10,7 @@ cloudinary.config(
   cloud_name = "ditvzji07", 
   api_key = "693958374426433", 
   api_secret = "6BO4issZw7-7LG8ukvOeSAdeWfY",
-  secure = True
-  
+  secure = True 
 )
 
 async def db_connect():
