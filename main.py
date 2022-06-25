@@ -292,7 +292,7 @@ async def updateCartItem(req:Request):
         return resp    
 
     except:
-        resp = JSONResponse(content = {'Value':False,'Message': "Error"}) 
+        resp = JSONResponse(content = {'Value':False,'Message': "Error1"}) 
         if bool(req.cookies) and bool(req.cookies['Token']):
             resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
         return resp                       
