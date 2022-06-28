@@ -21,12 +21,12 @@ templates = Jinja2Templates(directory="Admin_pages/")
 app = FastAPI()
 app.mount("/static", StaticFiles(directory=pkg_resources.resource_filename(__name__, 'static')), name="static")
 app.add_middleware(
-    HTTPSRedirectMiddleware
-    # CORSMiddleware,
-    # allow_origins= ["*"],
-    # allow_credentials=True,
-    # allow_methods=["*"],
-    # allow_headers=["*"]
+    # HTTPSRedirectMiddleware
+    CORSMiddleware,
+    allow_origins= ["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
 )
 
 # User
@@ -38,7 +38,8 @@ async def signin(req:Request):
             auth = await db.authUser(await db.db_connect(),user)
             if (auth['Value']): 
                 resp = JSONResponse(content = {'Value':auth['Value'],'Message': auth['Message'],'User':auth['user']})
-                resp.set_cookie(key="Token",value=t.create_access_token({'id':auth['id'],'role':auth['auth']},24),secure=True,httponly=True)
+                token,expire = t.create_access_token({'id':auth['id'],'role':auth['auth']},24)
+                resp.set_cookie(key="Token",value=token,secure=True,httponly=True,expires=expire)
                 return resp
             else:
                 resp = JSONResponse(content = {'Value':auth['Value'],'Message': auth['Message']})
@@ -634,7 +635,8 @@ async def adminAuth(req:Request):
         resp = RedirectResponse('/admin',status_code=status.HTTP_302_FOUND)
         auth = await db.authUser(await db.db_connect(),user_dict)
         if (auth['Value'] and auth['auth']==1): 
-            resp.set_cookie(key="Token",value=t.create_access_token({"id":auth['id'],"role":auth['auth']},1),secure=True,httponly=True)
+            token,expire = t.create_access_token({"id":auth['id'],"role":auth['auth']},1)
+            resp.set_cookie(key="Token",value=token,secure=True,httponly=True,expires=expire)
         return resp
     except:
             return {'Value':False,'Meassage':"Error"}

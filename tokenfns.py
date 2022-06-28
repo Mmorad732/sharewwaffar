@@ -14,7 +14,7 @@ def create_access_token(data: dict , time:float):
     expire = datetime.utcnow() + timedelta(hours=time)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    return encoded_jwt,expire
 
 def auth_token(token: str = Depends(oauth2_scheme)):
     try:
