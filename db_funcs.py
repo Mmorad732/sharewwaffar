@@ -131,9 +131,10 @@ async def insertIntoTable(connection,content):
                     connection.commit()
                     row_count = cursor.rowcount
                     if row_count >= 1:
+                        result = cursor.fetchone()
                         cursor.close()
                         connection.close()
-                        return {'Value':False, 'Message':table+" already exists"}
+                        return {'Value':False, 'Message':table+" already exists", 'Result':result}
                     insert_query,values = await makeInsertQuery(content,table) 
                     cursor.execute(insert_query, values)
                     connection.commit()
@@ -154,12 +155,18 @@ def makeCond(content):
     im = ''
     price = ''
     quantity = ''
+    cart = ''
+    wishlist = ''
     if 'image' in content:
         im = content.pop('image')
     if 'price' in content:
         price = content.pop('price')
     if 'quantity' in content:
         quantity = content.pop('quantity')
+    if 'cart' in content:
+        cart = content.pop('cart')
+    if 'wishlist' in content:
+        wishlist = content.pop('wishlist')
     for key,val in content.items():
         if count == len(content)-1:
             cond += key+"= %s"
@@ -174,6 +181,10 @@ def makeCond(content):
         content['price'] = price
     if(bool(im)):
         content['image'] = im
+    if(bool(cart)):
+        content['cart'] = cart
+    if(bool(wishlist)):
+        content['wishlist'] = wishlist
     return cond,values
 
 def checkDict(dict):
@@ -296,7 +307,7 @@ async def updateItem(connection,content,id):
                 return {'Value':False, 'Message':"No change"}
             cursor.close()
             connection.close()
-            return {'Value':True, 'Message':table+" updated successfully"}
+            return {'Value':True, 'Message':table+" updated successfully",'Result':result}
     except conn.Error as e:
             return {'Value':False, 'Message':"Error"}
 
@@ -381,10 +392,10 @@ async def productQuery(connection,id):
         return {'Value':False,'Message':"Error"}
 
 async def getFromList(connection,table,content):
-    delete_query = ('SELECT * FROM '+table+' WHERE user = %s and product = %s')     
+    query = ('SELECT * FROM '+table+' WHERE user = %s and product = %s')     
     try:
         with connection.cursor(dictionary=True,buffered = True) as cursor:
-            cursor.execute(delete_query,[content['user'],int(content['product'])])
+            cursor.execute(query,[content['user'],content['product']])
             connection.commit()
             row_count = cursor.rowcount
             if row_count == 0:    
@@ -415,21 +426,19 @@ async def productIncDec(connection,content,op):
     except conn.Error as e:
         return {'Value':False, 'Message':'Error'}
 
-async def getListItems(connection,table,user):
+async def getListItems(connection,table,user,cond=''):
     try:
         with connection.cursor(dictionary=True,buffered=True) as cursor:
-            if table.lower()=='cart':
+            if not bool(cond):
                 cursor.execute(
-                            " SELECT product.id , product.image,product.name,\
-                            cart.quantity AS quantity, cart.price AS price \
-                            FROM cart \
-                            JOIN product ON cart.product = product.id and cart.user = %s",[user])
-            elif table.lower()=='wishlist':
+                            " SELECT product.id,product.name\
+                            FROM history \
+                            JOIN product ON history.product = product.id and history.user = %s",[user])
+            else:
                 cursor.execute(
-                            " SELECT product.id , product.image,product.name \
-                            FROM wishlist \
-                            JOIN product ON wishlist.product = product.id and wishlist.user = %s",[user])
-
+                            " SELECT product.id , product.image,product.name,product.price,history.quantity as quantity\
+                            FROM history \
+                            JOIN product ON product.id = history.product and "+cond+"=1 and history.user = %s",[user])
             connection.commit()
             row_count = cursor.rowcount
             if row_count == 0:    
@@ -511,12 +520,11 @@ async def deleteHist(connection,user,prod,cond):
         condition = 'wishlist' 
     elif cond.lower() == 'purchase':
         condition = 'purchase'    
-    delete_query = 'DELETE FROM history WHERE '+condition+' = %s and user = %s and product = %s' 
+    delete_query = 'DELETE FROM history WHERE '+condition+' =  user = %s and product = %s' 
     try:
         with connection.cursor(dictionary=True,buffered = True) as cursor:
             cursor.execute(delete_query,[1,user,prod])
             connection.commit()
-
             row_count = cursor.rowcount
             if row_count == 0:    
                 cursor.close()

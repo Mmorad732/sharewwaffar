@@ -40,7 +40,7 @@ async def signin(req:Request):
             auth = await db.authUser(await db.db_connect(),user)
             if (auth['Value']): 
                 resp = JSONResponse(content = {'Value':auth['Value'],'Message': auth['Message'],'User':auth['user']})
-                resp.set_cookie(key="Token",value=t.create_access_token({'id':auth['id'],'role':auth['auth']},180),secure=True,httponly=True)
+                resp.set_cookie(key="Token",value=t.create_access_token({'id':auth['id'],'role':auth['auth']},24),secure=True,httponly=True)
                 return resp
             else:
                 resp = JSONResponse(content = {'Value':auth['Value'],'Message': auth['Message']})
@@ -101,8 +101,10 @@ async def getCartItems(req:Request):
             tok = t.auth_token(req.cookies['Token'])
             if tok['Value']:
                 user = tok['id']
-                items = await db.getListItems(await db.db_connect(),'Cart',user)
+                items = await db.getListItems(await db.db_connect(),'Cart',user,'cart')
                 if items['Value']:
+                    for itms in items['Result']:
+                        itms['price'] = float(itms['price'])*int(itms['quantity'])
                     resp = JSONResponse(content = {'Value':True,'Result': items['Result']}) 
                     resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                     return resp
@@ -135,50 +137,45 @@ async def addToCart(req:Request):
             if tok['Value']:
                 if(bool(await req.body())):
                     cart_item = await req.json()
-                    check_wl = await db.getFromList(await db.db_connect(),'Wishlist',{'user':tok['id'],'product':cart_item['prod_id']})
-                    if(not check_wl['Value']):
-                        product_fetch = await db.productQuery(await db.db_connect(),cart_item['prod_id'])
-                        if(int(cart_item['quantity'])>0):
+                    if(int(cart_item['quantity'])>0):
+                        hist_content = {'table':'History','user':tok['id'],'product':int(cart_item['prod_id']),'quantity':cart_item['quantity'],'cart':1,'date':str(date.today())}
+                        insert = await db.insertIntoTable(await db.db_connect(),hist_content)
+                        if(insert['Value']):
+                            product_fetch = await db.productQuery(await db.db_connect(),cart_item['prod_id'])
                             if(product_fetch['Value']):
                                 quantity = int(cart_item['quantity'])
-                                content = {'table':'Cart','user':tok['id'],'product':int(cart_item['prod_id']),'quantity':cart_item['quantity'],'price': float(product_fetch['Result']['price'])*quantity}
-                                result = await db.insertIntoTable(await db.db_connect(),content)
-                                if result['Value']:
-                                    prod_cart_count = int(product_fetch['Result']['cart_count'])+quantity
-                                    update_content = {'column':'cart_count','prod_id':cart_item['prod_id'],'quantity':str(quantity)}
-                                    update_product = await db.productIncDec(await db.db_connect(),update_content,'+')
-                                    if(update_product['Value']):
-                                        hist_content = {'table':'History','user':tok['id'],'product':int(cart_item['prod_id']),'cart':1,'date':str(date.today())}
-                                        history_insert = await db.insertIntoTable(await db.db_connect(),hist_content)
-                                        if history_insert['Value']:
-                                            if(product_fetch['Result']['quantity']<= (prod_cart_count+product_fetch['Result']['wl_count'])):
-                                                deal_content = {'product':int(cart_item['prod_id']),'quantity':product_fetch['Result']['quantity'],'discount':product_fetch['Result']['discount'],'start_date':str(date.today()),'end_date':str(date.today()+timedelta(days=1))}
-                                                deal_result = await db.addDeal(await db.db_connect(),deal_content)
-                                                if deal_result['Value']:
-                                                    if 'Result' in deal_result.keys():
-                                                        endDate = deal_result['Result']['end_date']
-                                                    else:
-                                                        endDate = deal_content['end_date']
-                                                    await deal.dealShoutOut(cart_item['prod_id'],endDate)
-                                            resp = JSONResponse(content = {'Value':product_fetch['Value'],'Message': result['Message']}) 
-                                            resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
-                                            return resp
-                                    else:
-                                        resp = JSONResponse(content = {'Value':product_fetch['Value'],'Message': "Error"}) 
-                                        resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
-                                        return resp
+                                prod_cart_count = int(product_fetch['Result']['cart_count'])+quantity
+                                update_content = {'column':'cart_count','prod_id':cart_item['prod_id'],'quantity':str(quantity)}
+                                update_product = await db.productIncDec(await db.db_connect(),update_content,'+')
+                                if(update_product['Value']):
+                                    if(product_fetch['Result']['quantity']<= (prod_cart_count+product_fetch['Result']['wl_count'])):
+                                        deal_content = {'product':int(cart_item['prod_id']),'quantity':product_fetch['Result']['quantity'],'discount':product_fetch['Result']['discount'],'start_date':str(date.today()),'end_date':str(date.today()+timedelta(days=1))}
+                                        deal_result = await db.addDeal(await db.db_connect(),deal_content)
+                                        if deal_result['Value']:
+                                            if 'Result' in deal_result.keys():
+                                                endDate = deal_result['Result']['end_date']
+                                            else:
+                                                endDate = deal_content['end_date']
+                                            await deal.dealShoutOut(cart_item['prod_id'],endDate)
+                                    resp = JSONResponse(content = {'Value':product_fetch['Value'],'Message': 'Product added to cart successfuly'}) 
+                                    resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
+                                    return resp
                                 else:
-                                    resp = JSONResponse(content = {'Value':result['Value'],'Message': result['Message']}) 
+                                    resp = JSONResponse(content = {'Value':product_fetch['Value'],'Message': "Error"}) 
                                     resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                                     return resp
                             else:
                                 resp = JSONResponse(content = {'Value':product_fetch['Value'],'Message': product_fetch['Message']}) 
                                 resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                                 return resp
-                    else:
-                        resp = JSONResponse(content = {'Value':False,'Message': "Product is in your wishlist"}) 
-                        resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
-                        return resp
+                        else:
+                            if insert['Result']['wishlist']==1:
+                                msg = 'Product is in your wishlist'
+                            else:
+                                msg = 'Product is in your cart'
+                            resp = JSONResponse(content = {'Value':False,'Message': msg}) 
+                            resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
+                            return resp
                 
                     resp = JSONResponse(content = {'Value':False,'Message': "Bad Request"}) 
                     resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
@@ -207,16 +204,16 @@ async def deleteFromCart(req:Request):
             if tok['Value']:
                 if(bool(await req.body())):
                     cart_item = await req.json()
-                    cart_info = await db.getFromList(await db.db_connect(),'Cart',{'user':tok['id'],'product':cart_item['prod_id']})
-                    if(cart_info['Value']):
-                        delete_item = await db.deleteById(await db.db_connect(),'Cart',cart_info['Result']['id'])
+                    cart_info = await db.getFromList(await db.db_connect(),'History',{'user':tok['id'],'product':cart_item['prod_id']})
+                    if(cart_info['Value'] and cart_info['Result']['cart']==1):
+                        delete_item = await db.deleteById(await db.db_connect(),'History',cart_info['Result']['id'])
                         if delete_item['Value']:
                             update_content = {'column':'cart_count','prod_id':cart_item['prod_id'],'quantity':str(cart_info['Result']['quantity'])}
                             update_product = await db.productIncDec(await db.db_connect(),update_content,'-')
-                            delete_hist = await db.deleteHist(await db.db_connect(),tok['id'],cart_item['prod_id'],'cart')
-                        resp = JSONResponse(content = {'Value':delete_item['Value'],'Message': delete_item['Message']}) 
-                        resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
-                        return resp
+                            if(update_product['Value']):
+                                resp = JSONResponse(content = {'Value':delete_item['Value'],'Message': delete_item['Message']}) 
+                                resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
+                                return resp
                     else:
                         resp = JSONResponse(content = {'Value':False,'Message': "Error"}) 
                         resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
@@ -226,7 +223,7 @@ async def deleteFromCart(req:Request):
                     resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                     return resp
         resp = JSONResponse(content = {'Value':False,'Message': "UnAuthozied"}) 
-        return resp    
+        return resp   
 
     except:
         resp = JSONResponse(content = {'Value':False,'Message': "Error"})
@@ -248,10 +245,9 @@ async def updateCartItem(req:Request):
             if tok['Value']:
                 if(bool(await req.body())):
                     cart_item = await req.json()
-                    cart_info = await db.getFromList(await db.db_connect(),'Cart',{'user':tok['id'],'product':cart_item['prod_id']})
-                    if(cart_info['Value'] and int(cart_item['quantity']) > 0 ):
-                        unit_price = float(cart_info['Result']['price'])/int(cart_info['Result']['quantity'])
-                        update_content = {'table':'Cart','quantity': cart_item['quantity'],'price':str(unit_price*int(cart_item['quantity']))}
+                    cart_info = await db.getFromList(await db.db_connect(),'History',{'user':tok['id'],'product':cart_item['prod_id']})
+                    if(cart_info['Value'] and int(cart_item['quantity']) > 0 and cart_info['Result']['cart']==1):
+                        update_content = {'table':'History','quantity': cart_item['quantity']}
                         update_item = await db.updateItem(await db.db_connect(),update_content,cart_info['Result']['id'])
                         if update_item['Value']:
                             if(cart_info['Result']['quantity'] > int(cart_item['quantity'])):
@@ -273,15 +269,15 @@ async def updateCartItem(req:Request):
                                             endDate = deal_content['end_date']
                                         await deal.dealShoutOut(cart_item['prod_id'],endDate)
                                                 
-                                resp = JSONResponse(content = {'Value':update_item['Value'],'Message': update_item['Message']}) 
+                                resp = JSONResponse(content = {'Value':update_item['Value'],'Message': "Updated Successfuly"}) 
                                 resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                                 return resp
                         else:
-                            resp = JSONResponse(content = {'Value':update_item['Value'],'Message': update_item['Message']}) 
+                            resp = JSONResponse(content = {'Value':update_item['Value'],'Message': "Not updated"}) 
                             resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                             return resp
                     else:
-                        resp = JSONResponse(content = {'Value':cart_info['Value'],'Message': cart_info['Message']}) 
+                        resp = JSONResponse(content = {'Value':cart_info['Value'],'Message': "Error"}) 
                         resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                         return resp
                 
@@ -300,7 +296,7 @@ async def updateCartItem(req:Request):
 @app.post('/addwishlistitem')
 async def addToWishList(req:Request):
     try:
-        if bool(req.cookies):
+        if bool(req.cookies): 
             try:
                 bool(req.cookies['Token'])
             except:
@@ -309,38 +305,29 @@ async def addToWishList(req:Request):
             if tok['Value']:
                 if(bool(await req.body())):
                     wl_item = await req.json()
-                    check_cart = await db.getFromList(await db.db_connect(),'Cart',{'user':tok['id'],'product':wl_item['prod_id']})
-                    if(not check_cart['Value']):
+                    hist_content = {'table':'History','user':tok['id'],'product':int(wl_item['prod_id']),'quantity':1,'wishlist':1,'date':str(date.today())}
+                    insert = await db.insertIntoTable(await db.db_connect(),hist_content)
+                    if(insert['Value']):
                         product_fetch = await db.productQuery(await db.db_connect(),wl_item['prod_id'])
                         if(product_fetch['Value']):
-                            content = {'table':'Wishlist','user':tok['id'],'product':wl_item['prod_id']}
-                            result = await db.insertIntoTable(await db.db_connect(),content)
-                            if result['Value']:
-                                update_content = {'column':'wl_count','prod_id':wl_item['prod_id'],'quantity':'1'}
-                                update_product = await db.productIncDec(await db.db_connect(),update_content,'+')
-                                if(update_product['Value']):
-                                    hist_content = {'table':'History','user':tok['id'],'product':int(wl_item['prod_id']),'wishlist':1,'date':str(date.today())}
-                                    history_insert = await db.insertIntoTable(await db.db_connect(),hist_content)
-                                    if(history_insert['Value']):
-                                        if(product_fetch['Result']['quantity'] <= (product_fetch['Result']['cart_count'])+product_fetch['Result']['wl_count']+1):
-                                            deal_content = {'product':int(wl_item['prod_id']),'quantity':product_fetch['Result']['quantity'],'discount':product_fetch['Result']['discount'],'start_date':str(date.today()),'end_date':str(date.today()+timedelta(days=1))}
-                                            deal_result = await db.addDeal(await db.db_connect(),deal_content)
-                                            if deal_result['Value']:
-                                                if 'Result' in deal_result.keys():
-                                                    endDate = deal_result['Result']['end_date']
-                                                else:
-                                                    endDate = deal_content['end_date']
-                                                await deal.dealShoutOut(wl_item['prod_id'],endDate)
-                                            
-                                    resp = JSONResponse(content = {'Value':product_fetch['Value'],'Message': result['Message']}) 
-                                    resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
-                                    return resp
-                                else:
-                                    resp = JSONResponse(content = {'Value':product_fetch['Value'],'Message': "Error"}) 
-                                    resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
-                                    return resp
+                            prod_wl_count = int(product_fetch['Result']['wl_count'])+1
+                            update_content = {'column':'wl_count','prod_id':wl_item['prod_id'],'quantity':'1'}
+                            update_product = await db.productIncDec(await db.db_connect(),update_content,'+')
+                            if(update_product['Value']):
+                                if(product_fetch['Result']['quantity']<= (prod_wl_count+product_fetch['Result']['cart_count'])):
+                                    deal_content = {'product':int(wl_item['prod_id']),'quantity':product_fetch['Result']['quantity'],'discount':product_fetch['Result']['discount'],'start_date':str(date.today()),'end_date':str(date.today()+timedelta(days=1))}
+                                    deal_result = await db.addDeal(await db.db_connect(),deal_content)
+                                    if deal_result['Value']:
+                                        if 'Result' in deal_result.keys():
+                                            endDate = deal_result['Result']['end_date']
+                                        else:
+                                            endDate = deal_content['end_date']
+                                        await deal.dealShoutOut(wl_item['prod_id'],endDate)
+                                resp = JSONResponse(content = {'Value':product_fetch['Value'],'Message': 'Product added to wishlist successfuly'}) 
+                                resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
+                                return resp
                             else:
-                                resp = JSONResponse(content = {'Value':result['Value'],'Message': result['Message']}) 
+                                resp = JSONResponse(content = {'Value':product_fetch['Value'],'Message': "Error"}) 
                                 resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                                 return resp
                         else:
@@ -348,11 +335,14 @@ async def addToWishList(req:Request):
                             resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                             return resp
                     else:
-                        resp = JSONResponse(content = {'Value':False,'Message': "Product is in your cart"}) 
+                        if insert['Result']['wishlist']==1:
+                            msg = 'Product is in your wishlist'
+                        else:
+                            msg = 'Product is in your cart'
+                        resp = JSONResponse(content = {'Value':False,'Message': msg}) 
                         resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                         return resp
-                        
-
+            
                 resp = JSONResponse(content = {'Value':False,'Message': "Bad Request"}) 
                 resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                 return resp
@@ -371,7 +361,7 @@ async def addToWishList(req:Request):
 @app.post('/deletewishlistitem')
 async def deleteFromWishList(req:Request):
     try:
-        if bool(req.cookies):
+        if bool(req.cookies): 
             try:
                 bool(req.cookies['Token'])
             except:
@@ -380,20 +370,16 @@ async def deleteFromWishList(req:Request):
             if tok['Value']:
                 if(bool(await req.body())):
                     wl_item = await req.json()
-                    wl_info = await db.getFromList(await db.db_connect(),'Wishlist',{'user':tok['id'],'product':wl_item['prod_id']})
-                    if(wl_info['Value']):
-                        delete_item = await db.deleteById(await db.db_connect(),'Wishlist',wl_info['Result']['id'])
+                    wl_info = await db.getFromList(await db.db_connect(),'History',{'user':tok['id'],'product':wl_item['prod_id']})
+                    if(wl_info['Value'] and wl_info['Result']['wishlist']==1):
+                        delete_item = await db.deleteById(await db.db_connect(),'History',wl_info['Result']['id'])
                         if delete_item['Value']:
                             update_content = {'column':'wl_count','prod_id':wl_item['prod_id'],'quantity':'1'}
                             update_product = await db.productIncDec(await db.db_connect(),update_content,'-')
-                            delete_hist = await db.deleteHist(await db.db_connect(),tok['id'],wl_item['prod_id'],'wishlist')
-                            resp = JSONResponse(content = {'Value':delete_item['Value'],'Message': delete_item['Message']}) 
-                            resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
-                            return resp
-                        else:
-                            resp = JSONResponse(content = {'Value':delete_item['Value'],'Message': delete_item['Message']}) 
-                            resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
-                            return resp
+                            if(update_product['Value']):
+                                resp = JSONResponse(content = {'Value':delete_item['Value'],'Message': delete_item['Message']}) 
+                                resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
+                                return resp
                     else:
                         resp = JSONResponse(content = {'Value':False,'Message': "Error"}) 
                         resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
@@ -403,16 +389,15 @@ async def deleteFromWishList(req:Request):
                     resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                     return resp
         resp = JSONResponse(content = {'Value':False,'Message': "UnAuthozied"}) 
-        return resp    
+        return resp   
 
     except:
         resp = JSONResponse(content = {'Value':False,'Message': "Error"})
         try:
             bool(req.cookies['Token'])
-            resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
         except:
-            return JSONResponse(content = {'Value':False,'Message': "UnAuthozied"}) 
-        return resp          
+            return resp
+        return resp  
 
 @app.post('/wishlistitems')
 async def getWishListItems(req:Request):
@@ -425,7 +410,7 @@ async def getWishListItems(req:Request):
             tok = t.auth_token(req.cookies['Token'])
             if tok['Value']:
                 user = tok['id']
-                items = await db.getListItems(await db.db_connect(),'Wishlist',user)
+                items = await db.getListItems(await db.db_connect(),'Wishlist',user,'wishlist')
                 if items['Value']:
                     resp = JSONResponse(content = {'Value':True,'Result': items['Result']}) 
                     resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
@@ -438,13 +423,14 @@ async def getWishListItems(req:Request):
         resp = JSONResponse(content = {'Value':False,'Message': "UnAuthozied"}) 
         return resp    
     except:
-        resp = JSONResponse(content = {'Value':False,'Message': "Error"})
-        try:
-            bool(req.cookies['Token'])
-            resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
-        except:
-            return JSONResponse(content = {'Value':False,'Message': "UnAuthozied"})
-        return resp                       
+        resp = JSONResponse(content = {'Value':False,'Message': "Error"}) 
+        if bool(req.cookies): 
+            try:
+                bool(req.cookies['Token'])
+                resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
+            except:
+                return resp
+        return resp  
 
 @app.post('/products')
 async def products(req:Request):
@@ -501,22 +487,13 @@ async def recommends(req:Request):
                 return JSONResponse(content = {'Value':False,'Message': "UnAuthozied"})
             tok = t.auth_token(req.cookies['Token'])
             if tok['Value']:
-                user = tok['id']
                 products = await db.getFilteredProducts(await db.db_connect())
-                if bool(products):
-                    usercart = await db.getListItems(await db.db_connect(),'Cart',user)
+                if products['Value']:
+                    userproducts = await db.getListItems(await db.db_connect(),'history',tok['id'])
                     intrests = []
-                    carttemp = []
-                    if(usercart['Value']):
-                        carttemp = [i['id'] for i in usercart['Result']]
-                    userwl = await db.getListItems(await db.db_connect(),'Wishlist',user) 
-                    wltemp = [] 
-                    if(userwl['Value']):
-                        wltemp = [i['id'] for i in userwl['Result']]
-                    intrests = carttemp + wltemp
+                    if(userproducts['Value']):
+                        intrests = [i['id'] for i in userproducts['Result']]
                     if(len(intrests)>0 ):
-                        x = np.array(intrests)
-                        intrests = np.unique(x)
                         df =  pd.DataFrame(products['Result'])
                         recommends = recommender.recommend(df,intrests)
                         if len(recommends)>0:
@@ -531,14 +508,20 @@ async def recommends(req:Request):
                         resp = JSONResponse(content = {'Value':False,'Message': "No recommends"}) 
                         resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                         return resp    
-          
+                else:
+                        resp = JSONResponse(content = {'Value':False,'Message': "No products"}) 
+                        resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
+                        return resp
 
         resp = JSONResponse(content = {'Value':False,'Message': "UnAuthozied"}) 
         return resp    
     except:
         resp = JSONResponse(content = {'Value':False,'Message': "Error"}) 
-        resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
-        return resp                       
+        try:
+            bool(req.cookies['Token'])
+            resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
+        except:
+            return resp
 
 @app.post('/categories')
 async def getCategories(req:Request):
@@ -652,7 +635,7 @@ async def adminAuth(req:Request):
         resp = RedirectResponse('/admin',status_code=status.HTTP_302_FOUND)
         auth = await db.authUser(await db.db_connect(),user_dict)
         if (auth['Value'] and auth['auth']==1): 
-            resp.set_cookie(key="Token",value=t.create_access_token({"id":auth['id'],"role":auth['auth']},60),secure=True,httponly=True)
+            resp.set_cookie(key="Token",value=t.create_access_token({"id":auth['id'],"role":auth['auth']},1),secure=True,httponly=True)
         return resp
     except:
             return {'Value':False,'Meassage':"Error"}
