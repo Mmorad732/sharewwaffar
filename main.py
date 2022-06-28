@@ -1,6 +1,5 @@
-from fastapi import FastAPI , Request
-from fastapi.responses import JSONResponse
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import FastAPI , Request 
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 import tokenfns as t
@@ -12,7 +11,6 @@ import pkg_resources
 import starlette.status as status
 from fastapi.templating import Jinja2Templates
 import pandas as pd
-import numpy as np
 from datetime import date, timedelta
 
 
@@ -45,33 +43,34 @@ async def signin(req:Request):
             else:
                 resp = JSONResponse(content = {'Value':auth['Value'],'Message': auth['Message']})
                 return resp
-        elif bool(req.cookies):
-            try:
-                bool(req.cookies['Token'])
-            except:
-                return {'Value':False ,'Message':"Error"}
-            tok = t.auth_token(req.cookies['Token'])
-            if tok['Value'] and tok['role']==2:
-                user = await db.getIdFromdb(await db.db_connect(),'User',tok['id'],content='email,first_name,last_name,address,wallet')
-                resp = JSONResponse(content = {'Value':tok['Value'],'Message': "Authorized User",'User':user['Result']}) 
-                resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
-                return resp
-            else:
-                resp = JSONResponse(content = {'Value':False,'Message': "Guest"})
-                resp.delete_cookie('Token')
-                return resp
-        resp = JSONResponse(content = {'Value':False,'Message': "Guest"})
-        return resp
+        elif bool(req.cookies) and 'Token' in req.cookies.keys():
+            if 'host' in req.headers.keys() and 'referer' in req.headers.keys():
+                referer  = req.headers['referer'].split('/')
+                if(referer[-1]).lower() == 'logout':
+                    req.cookies['Token'] = ''
+            if(bool(req.cookies['Token'])):
+                tok = t.auth_token(req.cookies['Token'])
+                if tok['Value'] and tok['role']==2:
+                    user = await db.getIdFromdb(await db.db_connect(),'User',tok['id'],content='email,first_name,last_name,address,wallet')
+                    resp = JSONResponse(content = {'Value':tok['Value'],'Message': "Authorized User",'User':user['Result']}) 
+                    resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
+                    return resp
+            resp = JSONResponse(content = {'Value':False,'Message': "Guest"})
+            resp.delete_cookie('Token')
+            return resp
+        else:
+            resp = JSONResponse(content = {'Value':False,'Message': "Guest"})
+            return resp
     except:
-        return {'Value':False ,'Message':"Error"}
+        return {'Value':False ,'Message':"Error1"}
   
 @app.post('/logout')
 async def logout(req:Request):
     try:
-        respo = RedirectResponse('/user')
-        if(bool(req.cookies)):
-            respo.delete_cookie('Token')
-        return respo
+        resp = RedirectResponse('/user')
+        if(bool(req.cookies) and 'Token' in req.cookies.keys()):
+            resp.delete_cookie('Token')
+        return resp
     except:
             return {'Value':False,'Meassage':"Error"}
 
