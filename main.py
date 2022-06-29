@@ -63,7 +63,7 @@ async def signin(req:Request):
             resp = JSONResponse(content = {'Value':False,'Message': "Guest"})
             return resp
     except:
-        return {'Value':False ,'Message':"Error1"}
+        return {'Value':False ,'Message':"Error"}
   
 @app.post('/logout')
 async def logout(req:Request):
@@ -412,6 +412,8 @@ async def getWishListItems(req:Request):
                 user = tok['id']
                 items = await db.getListItems(await db.db_connect(),'Wishlist',user,'wishlist')
                 if items['Value']:
+                    for itms in items['Result']:
+                        itms.pop('quantity')
                     resp = JSONResponse(content = {'Value':True,'Result': items['Result']}) 
                     resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                     return resp
