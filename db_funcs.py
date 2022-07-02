@@ -6,6 +6,7 @@ import cloudinary.api
 
 
 
+
 cloudinary.config( 
   cloud_name = "ditvzji07", 
   api_key = "693958374426433", 
@@ -340,6 +341,13 @@ async def deleteById(connection, table , id):
                     await deleteIm(result['image'])
                 except conn.Error as e:
                     return {'Value':False, 'Message':'Error'}
+            # elif table.lower() == 'user':
+            #     userproducts = await getListItems(await db_connect(),'history',id)
+            #     print(userproducts)
+            #     return "okk"
+                # if(userproducts['Value']):
+                #     for i in userproducts[]:
+                
             cursor.execute(delete_query,[id])
             connection.commit()
             row_count = cursor.rowcount
@@ -481,8 +489,10 @@ async def getFilteredProducts(connection,cond = ''):
                 connection.close()
                 return {'Value':False,'Message':'No Products'}
             result = cursor.fetchall()
+            cursor.close()
+            connection.close()
             for prod in result:
-                prod['offer'] = str(prod.pop('quantity'))+' - '+str(prod.pop('discount'))+'%'
+                prod['offer'] = str(prod.pop('quantity'))+' Pcs - '+str(prod.pop('discount'))+'%'
             return {'Value':True,'Result':result}
     except conn.Error as e:
         return {'Value':False,'Message':'Error'}
@@ -507,7 +517,9 @@ async def getProduct(connection,id):
                 connection.close()
                 return {'Value':False,'Message':'No Products'}
             result = cursor.fetchone()
-            result['offer'] = str(result.pop('quantity'))+' - '+str(result.pop('discount'))+'%'
+            result['offer'] = str(result.pop('quantity'))+' Pcs - '+str(result.pop('discount'))+' %'
+            cursor.close()
+            connection.close()
             return {'Value':True,'Result':result}
     except conn.Error as e:
         return {'Value':False,'Message':'Error'}
@@ -583,7 +595,7 @@ async def addDeal(connection,content):
             connection.close()
             return {'Value':True, 'Message':"Created successfuly"}
     except conn.Error as e:
-            return {'Value':False, 'Message':"Error11"}
+            return {'Value':False, 'Message':"Error"}
     
 async def addNotifications(connection, content):
     try:
@@ -640,3 +652,60 @@ async def getNotifications(connection, content):
             return {'Value':True, 'Result':result}
     except conn.Error as e:
             return {'Value':False, 'Message':"Error"}
+
+async def getRandom(connection):
+    try:
+        with connection.cursor(dictionary=True,buffered = True) as cursor:
+            query = ("SELECT product.id,product.image,product.name,product.price,\
+                            category.name AS category,brand.name AS brand ,supplier.name AS supplier, \
+                            offer.quantity AS quantity, offer.discount AS discount \
+                            FROM product \
+                            JOIN category ON product.category = category.id \
+                            JOIN brand ON product.brand = brand.id  \
+                            JOIN supplier ON product.supplier = supplier.id \
+                            JOIN offer ON product.offer = offer.id \
+                            ORDER BY Rand() limit 3")
+            cursor.execute(query)
+            connection.commit()
+            row_count = cursor.rowcount
+            if row_count == 0:   
+                cursor.close()
+                connection.close()
+                return {'Value':False, 'Message':"No Notifications"}
+            result = cursor.fetchall() 
+            cursor.close()
+            connection.close()
+            for prod in result:
+                prod['offer'] = str(prod.pop('quantity'))+' Pcs - '+str(prod.pop('discount'))+' %'
+            return {'Value':True, 'Result':result}
+    except conn.Error as e:
+            return {'Value':False, 'Message':"Error"}
+
+async def getNew(connection):
+    try:
+        with connection.cursor(dictionary=True,buffered = True) as cursor:
+            query = ("SELECT product.id,product.image,product.name,product.price,\
+                            category.name AS category,brand.name AS brand ,supplier.name AS supplier, \
+                            offer.quantity AS quantity, offer.discount AS discount \
+                            FROM product \
+                            JOIN category ON product.category = category.id \
+                            JOIN brand ON product.brand = brand.id  \
+                            JOIN supplier ON product.supplier = supplier.id \
+                            JOIN offer ON product.offer = offer.id \
+                            ORDER BY id DESC limit 3")
+            cursor.execute(query)
+            connection.commit()
+            row_count = cursor.rowcount
+            if row_count == 0:   
+                cursor.close()
+                connection.close()
+                return {'Value':False, 'Message':"No Notifications"}
+            result = cursor.fetchall() 
+            cursor.close()
+            connection.close()
+            for prod in result:
+                prod['offer'] = str(prod.pop('quantity'))+' Pcs - '+str(prod.pop('discount'))+' %'
+            return {'Value':True, 'Result':result}
+    except conn.Error as e:
+            return {'Value':False, 'Message':"Error"}
+

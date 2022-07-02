@@ -21,15 +21,51 @@ templates = Jinja2Templates(directory="Admin_pages/")
 app = FastAPI()
 app.mount("/static", StaticFiles(directory=pkg_resources.resource_filename(__name__, 'static')), name="static")
 app.add_middleware(
-    HTTPSRedirectMiddleware
-    # CORSMiddleware,
-    # allow_origins= ["*"],
-    # allow_credentials=True,
-    # allow_methods=["*"],
-    # allow_headers=["*"]
+    # HTTPSRedirectMiddleware
+    CORSMiddleware,
+    allow_origins= ["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
 )
 
 # User
+@app.get('/')
+async def user(req:Request):
+    try:
+        return HTMLResponse(pkg_resources.resource_string(__name__, 'User_pages/index.html'))
+    except:
+            return {'Value':False,'Meassage':"Error"} 
+
+@app.post('/weblogout')
+async def logout(req:Request):
+    try:
+        resp = RedirectResponse('/',status_code=status.HTTP_302_FOUND)
+        if(bool(req.cookies) and 'Token' in req.cookies.keys()):
+            resp.delete_cookie('Token')
+        print(resp.headers)
+        return resp
+    except:
+            return {'Value':False,'Meassage':"Error"}
+            
+
+@app.post('/useroptions')
+async def userOptions(req:Request):
+    try:
+        if bool(req.cookies) and 'Token' in req.cookies.keys():
+            tok = t.auth_token(req.cookies['Token'])
+            if tok['Value'] and tok['role']==2:
+                resp = HTMLResponse(pkg_resources.resource_string(__name__, 'User_pages/userDropDown.html'))
+                resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
+        else:
+            resp = HTMLResponse(pkg_resources.resource_string(__name__, 'User_pages/guestDropDown.html'))
+        return {'Value':True,'Result':resp}
+    except:
+        return {'Value':False,'Message':'Error'}
+
+
+    
+
 @app.post('/user')
 async def signin(req:Request):
     try:
@@ -75,6 +111,7 @@ async def logout(req:Request):
     except:
             return {'Value':False,'Meassage':"Error"}
 
+
 @app.post('/signup')
 async def signup(req:Request):
     try:
@@ -97,7 +134,7 @@ async def getCartItems(req:Request):
             try:
                 bool(req.cookies['Token'])
             except:
-                return JSONResponse(content = {'Value':False,'Message': "UnAuthozied"})
+                return JSONResponse(content = {'Value':False,'Message': "UnAuthorized"})
             tok = t.auth_token(req.cookies['Token'])
             if tok['Value']:
                 user = tok['id']
@@ -113,7 +150,7 @@ async def getCartItems(req:Request):
                     resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                     return resp
 
-        resp = JSONResponse(content = {'Value':False,'Message': "UnAuthozied"}) 
+        resp = JSONResponse(content = {'Value':False,'Message': "UnAuthorized"}) 
         return resp    
     except:
         resp = JSONResponse(content = {'Value':False,'Message': "Error"}) 
@@ -132,7 +169,7 @@ async def addToCart(req:Request):
             try:
                 bool(req.cookies['Token'])
             except:
-                return JSONResponse(content = {'Value':False,'Message': "UnAuthozied"})
+                return JSONResponse(content = {'Value':False,'Message': "UnAuthorized"})
             tok = t.auth_token(req.cookies['Token'])
             if tok['Value']:
                 if(bool(await req.body())):
@@ -181,7 +218,7 @@ async def addToCart(req:Request):
                     resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                     return resp
             
-        resp = JSONResponse(content = {'Value':False,'Message': "UnAuthozied"}) 
+        resp = JSONResponse(content = {'Value':False,'Message': "UnAuthorized"}) 
         return resp
     except:
         resp = JSONResponse(content = {'Value':False,'Message': "Error"})
@@ -199,7 +236,7 @@ async def deleteFromCart(req:Request):
             try:
                 bool(req.cookies['Token'])
             except:
-                return JSONResponse(content = {'Value':False,'Message': "UnAuthozied"})
+                return JSONResponse(content = {'Value':False,'Message': "UnAuthorized"})
             tok = t.auth_token(req.cookies['Token'])
             if tok['Value']:
                 if(bool(await req.body())):
@@ -222,7 +259,7 @@ async def deleteFromCart(req:Request):
                     resp = JSONResponse(content = {'Value':False,'Message': "Bad Request"}) 
                     resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                     return resp
-        resp = JSONResponse(content = {'Value':False,'Message': "UnAuthozied"}) 
+        resp = JSONResponse(content = {'Value':False,'Message': "UnAuthorized"}) 
         return resp   
 
     except:
@@ -240,7 +277,7 @@ async def updateCartItem(req:Request):
             try:
                 bool(req.cookies['Token'])
             except:
-                return JSONResponse(content = {'Value':False,'Message': "UnAuthozied"})
+                return JSONResponse(content = {'Value':False,'Message': "UnAuthorized"})
             tok = t.auth_token(req.cookies['Token'])
             if tok['Value']:
                 if(bool(await req.body())):
@@ -277,14 +314,14 @@ async def updateCartItem(req:Request):
                             resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                             return resp
                     else:
-                        resp = JSONResponse(content = {'Value':cart_info['Value'],'Message': "Error"}) 
+                        resp = JSONResponse(content = {'Value':False,'Message': "Error"}) 
                         resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                         return resp
                 
                 resp = JSONResponse(content = {'Value':False,'Message': "Bad Request"}) 
                 resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                 return resp
-        resp = JSONResponse(content = {'Value':False,'Message': "UnAuthozied"}) 
+        resp = JSONResponse(content = {'Value':False,'Message': "UnAuthorized"}) 
         return resp    
 
     except:
@@ -300,7 +337,7 @@ async def addToWishList(req:Request):
             try:
                 bool(req.cookies['Token'])
             except:
-                return JSONResponse(content = {'Value':False,'Message': "UnAuthozied"})
+                return JSONResponse(content = {'Value':False,'Message': "UnAuthorized"})
             tok = t.auth_token(req.cookies['Token'])
             if tok['Value']:
                 if(bool(await req.body())):
@@ -347,7 +384,7 @@ async def addToWishList(req:Request):
                 resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                 return resp
             
-        resp = JSONResponse(content = {'Value':False,'Message': "UnAuthozied"}) 
+        resp = JSONResponse(content = {'Value':False,'Message': "UnAuthorized"}) 
         return resp
     except:
         resp = JSONResponse(content = {'Value':False,'Message': "Error"})
@@ -365,7 +402,7 @@ async def deleteFromWishList(req:Request):
             try:
                 bool(req.cookies['Token'])
             except:
-                return JSONResponse(content = {'Value':False,'Message': "UnAuthozied"})
+                return JSONResponse(content = {'Value':False,'Message': "UnAuthorized"})
             tok = t.auth_token(req.cookies['Token'])
             if tok['Value']:
                 if(bool(await req.body())):
@@ -388,7 +425,7 @@ async def deleteFromWishList(req:Request):
                     resp = JSONResponse(content = {'Value':False,'Message': "Bad Request"}) 
                     resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                     return resp
-        resp = JSONResponse(content = {'Value':False,'Message': "UnAuthozied"}) 
+        resp = JSONResponse(content = {'Value':False,'Message': "UnAuthorized"}) 
         return resp   
 
     except:
@@ -406,7 +443,7 @@ async def getWishListItems(req:Request):
             try:
                 bool(req.cookies['Token'])
             except:
-                return JSONResponse(content = {'Value':False,'Message': "UnAuthozied"})
+                return JSONResponse(content = {'Value':False,'Message': "UnAuthorized"})
             tok = t.auth_token(req.cookies['Token'])
             if tok['Value']:
                 user = tok['id']
@@ -422,7 +459,7 @@ async def getWishListItems(req:Request):
                     resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                     return resp
 
-        resp = JSONResponse(content = {'Value':False,'Message': "UnAuthozied"}) 
+        resp = JSONResponse(content = {'Value':False,'Message': "UnAuthorized"}) 
         return resp    
     except:
         resp = JSONResponse(content = {'Value':False,'Message': "Error"}) 
@@ -482,41 +519,44 @@ async def products(req:Request,id):
 @app.post('/recommends')
 async def recommends(req:Request):
     try:
-        if bool(req.cookies):
-            try:
-                bool(req.cookies['Token'])
-            except:
-                return JSONResponse(content = {'Value':False,'Message': "UnAuthozied"})
+        if bool(req.cookies) and 'Token' in req.cookies.keys():   
             tok = t.auth_token(req.cookies['Token'])
             if tok['Value']:
-                products = await db.getFilteredProducts(await db.db_connect())
-                if products['Value']:
-                    userproducts = await db.getListItems(await db.db_connect(),'history',tok['id'])
+                userproducts = await db.getListItems(await db.db_connect(),'history',tok['id'])
+                if userproducts['Value']:
+                    products = await db.getFilteredProducts(await db.db_connect())
                     intrests = []
-                    if(userproducts['Value']):
+                    if(products['Value']):
                         intrests = [i['id'] for i in userproducts['Result']]
-                    if(len(intrests)>0 ):
-                        df =  pd.DataFrame(products['Result'])
-                        recommends = recommender.recommend(df,intrests)
-                        if len(recommends)>0:
-                            result = []
-                            for prod in products['Result']:
-                                if int(prod['id']) in recommends:
-                                    result.append(prod)
-                            resp = JSONResponse(content = {'Value':True,'Result': result}) 
-                            resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
-                            return resp
+                        if(len(intrests)>0):
+                            df =  pd.DataFrame(products['Result'])
+                            recommends = recommender.recommend(df,intrests)
+                            if len(recommends)>0:
+                                result = []
+                                for prod in products['Result']:
+                                    if int(prod['id']) in recommends and not int(prod['id']) in intrests:
+                                        result.append(prod)
+                                resp = JSONResponse(content = {'Value':True,'Result': result}) 
+                                resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
+                                return resp
                     else:
-                        resp = JSONResponse(content = {'Value':False,'Message': "No recommends"}) 
+                        resp = JSONResponse(content = {'Value':False,'Message': "Error"}) 
                         resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
-                        return resp    
-                else:
-                        resp = JSONResponse(content = {'Value':False,'Message': "No products"}) 
-                        resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
-                        return resp
+                        return resp 
+                    
+                
+                result = await db.getRandom(await db.db_connect())
+                resp = JSONResponse(content = {'Value':True,'Result': result["Result"]}) 
+                resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
+                return resp 
+            else:
+                resp = JSONResponse(content = {'Value':False,'Message': "UnAuthorized"}) 
+                return resp 
+          
+        result = await db.getRandom(await db.db_connect())
+        resp = JSONResponse(content = {'Value':True,'Result': result["Result"]}) 
+        return resp 
 
-        resp = JSONResponse(content = {'Value':False,'Message': "UnAuthozied"}) 
-        return resp    
     except:
         resp = JSONResponse(content = {'Value':False,'Message': "Error"}) 
         try:
@@ -528,7 +568,7 @@ async def recommends(req:Request):
 @app.post('/categories')
 async def getCategories(req:Request):
     try:
-        items = await db. getFromdb(await db.db_connect(),'Category')
+        items = await db.getFromdb(await db.db_connect(),'Category')
         resp = JSONResponse(content = {'Value':True,'Result': items['Result']}) 
         if(bool(req.cookies)):
             try:
@@ -550,7 +590,7 @@ async def getCategories(req:Request):
 @app.post('/brands')
 async def getBrands(req:Request):
     try:   
-        items = await db. getFromdb(await db.db_connect(),'Brand')
+        items = await db.getFromdb(await db.db_connect(),'Brand')
         resp = JSONResponse(content = {'Value':True,'Result': items['Result']}) 
         if(bool(req.cookies)):
             try:
@@ -575,7 +615,7 @@ async def getNotifications(req:Request):
             try:
                 bool(req.cookies['Token'])
             except:
-                return JSONResponse(content = {'Value':False,'Message': "UnAuthozied"})
+                return JSONResponse(content = {'Value':False,'Message': "UnAuthorized"})
             tok = t.auth_token(req.cookies['Token'])
             if tok['Value']:
                 notifications = await db.getNotifications(await db.db_connect(),{'user':tok['id'],'date':str(date.today())})
@@ -588,13 +628,53 @@ async def getNotifications(req:Request):
                     resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                     return resp 
 
-        resp = JSONResponse(content = {'Value':False,'Message': "UnAuthozied"}) 
+        resp = JSONResponse(content = {'Value':False,'Message': "UnAuthorized"}) 
         return resp    
     except:
         resp = JSONResponse(content = {'Value':False,'Message': "Error"}) 
         resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
         return resp 
 
+@app.post('/featured')
+async def getFeatured(req:Request):
+    try:
+        items = await db.getRandom(await db.db_connect())
+        resp = JSONResponse(content = {'Value':True,'Result': items['Result']}) 
+        if(bool(req.cookies)):
+            try:
+                bool(req.cookies['Token'])
+                resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
+            except:
+                return resp
+        return resp
+    except:
+        resp = JSONResponse(content = {'Value':False,'Message': "Error"}) 
+        try:
+            bool(req.cookies['Token'])
+            resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
+        except:
+            return resp
+            
+        return resp    
+
+@app.post('/newarrival')
+async def getNewArrival(req:Request):
+    try:
+        items = await db.getNew(await db.db_connect())
+        resp = JSONResponse(content = {'Value':True,'Result': items['Result']}) 
+        if(bool(req.cookies) and 'Token'in req.cookies.keys()):
+            resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True) 
+        return resp
+    except:
+        resp = JSONResponse(content = {'Value':False,'Message': "Error"}) 
+        try:
+            bool(req.cookies['Token'])
+            resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
+        except:
+            return resp
+            
+        return resp                    
+    
 
 
 

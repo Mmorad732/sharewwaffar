@@ -1,0 +1,14 @@
+<li>
+    <a class="dropdown-item" href="#"><span class="bi bi-chat-square"></span> Notifications</a>
+</li>
+<li>
+    <a class="dropdown-item" href="#" onclick="getListItems('wishlistitems')" data-bs-toggle="modal" data-bs-target="#productModal" id="userwishlistbutton"><span class="bi bi-bag-heart"></span> Wishlist</a>
+</li>
+<li>
+    <a class="dropdown-item" href="#" onclick="getListItems('cartitems')" data-bs-toggle="modal" data-bs-target="#productModal" id="usercartbutton"><span class="bi bi-cart"></span> Cart</a>
+</li>
+<li>
+    <form action="/weblogout" method="POST" id="logoutForm">
+        <a class="dropdown-item" href="javascript:logoutFormSubmit();"><span class="fas fa-sign-out-alt"></span> Logout</a>
+    </form> 
+</li>

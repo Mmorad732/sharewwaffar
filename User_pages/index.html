@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>shareWwaffar</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- BS5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.8/css/all.css">
+    <!-- end BS5 -->
+    <script src="/static/js/user_script.js"></script> 
+    <style>
+      .productCard:hover{
+        animation: shake 20s; 
+        animation-iteration-count: infinite; 
+        }
+        @keyframes shake {
+          0% { transform: translate(1px, 1px) rotate(0deg); }
+          10% { transform: translate(-1px, -2px) rotate(-1deg); }
+          20% { transform: translate(-3px, 0px) rotate(1deg); }
+          30% { transform: translate(3px, 2px) rotate(0deg); }
+          40% { transform: translate(1px, -1px) rotate(1deg); }
+          50% { transform: translate(-1px, 2px) rotate(-1deg); }
+          60% { transform: translate(-3px, 1px) rotate(0deg); }
+          70% { transform: translate(3px, 1px) rotate(-1deg); }
+          80% { transform: translate(-1px, -1px) rotate(1deg); }
+          90% { transform: translate(1px, 2px) rotate(0deg); }
+          100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+    </style>
+  </head>
+  <body onload="data()">
+      
+    <nav class="navbar navbar-expand-sm  bg-gradient shadow-lg navbar-dark sticky-top" id="navBar" style="background-color: #1B2430;">
+        <div class="container-fluid">
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a class="nav-link active" href="/">shareWwaffar</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" id="productsLink" name="Product">Products</a>
+            </li>
+            <li class="nav-item">
+              <div class="dropdown-container" style="position:relative;">
+              <a class="nav-link dropdown-toggle" href="#" name="Brand" data-bs-toggle="dropdown" aria-expanded="false">Brands</a>
+              <ul class="dropdown-menu overflow-auto" role="menu" id="BrandDropDown" style="height:300px;" >
+              </ul>
+              </div>
+            </li>
+
+            <li class="nav-item">
+              <div class="dropdown-container" style="position:relative;">
+              <a class="nav-link dropdown-toggle" href="#"  name="Category" data-bs-toggle="dropdown" aria-expanded="false">Categories</a>
+              <ul class="dropdown-menu overflow-auto" role="menu" id="CategoryDropDown" style="height:300px;">
+              </ul>
+            </div>
+            </li>
+
+          </ul>
+          
+          <ul class="navbar-nav ml-auto" id="NavBarRightSide">
+            <li class="nav-item">
+                <div class="dropdown-container dropstart" style="position:relative; ">
+                  <a class="nav-link dropdown-toggle " href="#" data-bs-toggle="dropdown" aria-expanded="false"><span class="bi bi-person-circle"></span></a>
+                    <ul class="dropdown-menu" id="UserDropDown">
+                      
+                      
+                    </ul>
+                </div>
+            </li>
+          </ul>
+          
+        </div>
+    </nav>
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+          <div  id="mainAlert" role="alert" style="visibility:hidden; z-index:1000; position:relative;"></div>
+                <div class="col-10 overflow-auto bg-gradient vh-100 w-100" style="padding:10px; background-color: #EFFFFD;">
+                  <div class="container-fluid d-grid gap-3"  id="outputCol">
+                    <div class="input-group w-25 start-50 translate-middle-x" id="resultColInputGroup" style="visibility:hidden;"></div>
+                    <div class="card-group justify-content-center gap-3"  id="resultCol">
+                    </div> 
+                  </div>
+                  <div class="container-fluid d-grid gap-3 justify-content-center"  id="indexCol">
+                        <!-- Slide show -->
+                        <div id="carouselExampleCaptions" class="carousel slide shadow-lg" data-bs-ride="carousel">
+                          <div class="carousel-indicators">
+                            <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+                            <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="1" aria-label="Slide 2"></button>
+                            <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="2" aria-label="Slide 3"></button>
+                          </div>
+                          <div class="carousel-inner" >
+                            <div class="carousel-item active" >
+                              <img src="https://res.cloudinary.com/ditvzji07/image/upload/c_scale,h_500,w_1200/v1654092119/cld-sample-4.jpg" class="d-block w-100" alt="...">
+                              <div class="carousel-caption d-none d-md-block">
+                                <h5>First slide label</h5>
+                                <p>Some representative placeholder content for the first slide.</p>
+                              </div>
+                            </div>
+                            <div class="carousel-item">
+                              <img src="https://res.cloudinary.com/ditvzji07/image/upload/c_scale,h_500,w_1200/v1654092119/cld-sample-4.jpg" class="d-block w-100" alt="...">
+                              <div class="carousel-caption d-none d-md-block">
+                                <h5>Second slide label</h5>
+                                <p>Some representative placeholder content for the second slide.</p>
+                              </div>
+                            </div>
+                            <div class="carousel-item">
+                              <img src="https://res.cloudinary.com/ditvzji07/image//upload/c_scale,h_500,w_1200/v1654092104/samples/ecommerce/accessories-bag.jpg" class="d-block w-100" alt="...">
+                              <div class="carousel-caption d-none d-md-block">
+                                <h5>Third slide label</h5>
+                                <p>Some representative placeholder content for the third slide.</p>
+                              </div>
+                            </div>
+                          </div>
+                          <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                          </button>
+                          <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                          </button>
+                        </div>
+                        <!-- End Slide show -->
+
+                      <h2>Recommends</h2>
+                      <div class="card-group justify-content-center w-100 vh-50 gap-3 overflow-auto"  id="recommendsCol">
+
+                      </div>
+                      <h2>Featured</h2>
+                      <div class="card-group justify-content-center w-100 vh-50 gap-3"  id="featuredCol">
+                          
+                      </div>
+                      <h2>New Arrivals</h2>
+                      <div class="card-group justify-content-center w-100 vh-50 gap-3"  id="arrivalCol">
+                          
+                      </div>
+                  </div> 
+                </div>
+              </div>
+        </div>               
+    <!--  Modal -->
+      <div class="modal fade overflow-auto" id="productModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true" style="max-height:100%;">
+        <div class="modal-dialog modal-dialog-centered">
+          
+          <div class="modal-content" id="productModalBody">
+            
+            <!-- <div class="modal-header">
+
+            </div> -->
+            <!-- <div class="modal-body" id="productModalBody"> </div>-->
+             
+          </div>
+        </div>
+      </div>
+    <!-- End Modal -->
+    <!-- Forms Modal -->
+      <div class="modal fade" id="signinFormModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="staticBackdropLabel">Sign in</h5>
+                <div  id="signinFormAlert" role="alert" style="visibility:hidden;"></div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <form action="#" id="signinForm" class="d-grid gap-5">
+                  <div class="form-outline">
+                    <label class="col-sm-2 col-form-label col-form-label-lg" >Email</label>
+                    <div class="input-group input-group-lg border border-primary rounded">
+                      <span class="input-group-text"><i class="bi bi-envelope" aria-hidden="true"></i></span>
+                      <input type="text" class="form-control" placeholder="Enter email" name="email" required>
+                    </div>
+                  </div>
+      
+                  <div class="form-outline input-group-lg">
+                    <label class="col-sm-3 col-form-label col-form-label-lg">Password</label>
+                    <div class="input-group input-group-lg border border-primary rounded"> 
+                      <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+                      <input type="password" class="form-control" name="password" placeholder="Enter password" id="signinPassowrd"required>
+                      <span class="input-group-text"><i class="bi bi-eye-slash" aria-hidden="true" onclick="showpassword('signinPassowrd',this.id)" id="signinEyeIcon"></i></span>
+                    </div>
+                  </div>
+      
+                    <div class="input-group input-group-lg col-12">
+                      <button class="btn btn-primary btn-block col-12" type="button" onclick="submitForm('/user','signinForm')">Sign in</button> 
+                    </div>
+                    <div class="input-group input-group-lg col-12 justify-content-center">
+                      <a href="#" type="button" onclick="clickSignup()">Sign up</a> 
+                    </div>
+                </form>
+              </div>
+            </div>
+          </div>
+      </div>
+      
+      <div class="modal fade" id="signupFormModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="staticBackdropLabel">Sign up</h5>
+              <div  id="signupFormAlert" role="alert" style="visibility:hidden;"></div>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form id="signupForm" class="d-grid gap-2">
+                <div class="form-outline">
+                  <label class="col-sm-2 col-form-label col-form-label-lg" >Email</label>
+                  <div class="input-group input-group-lg border border-primary rounded">
+                    <span class="input-group-text"><i class="bi bi-envelope" aria-hidden="true"></i></span>
+                    <input type="text" class="form-control" placeholder="Enter email" name="email" required>
+                  </div>
+                </div>
+      
+                <div class="form-outline input-group-lg">
+                  <label class="col-sm-3 col-form-label col-form-label-lg">Password</label>
+                  <div class="input-group input-group-lg border border-primary rounded"> 
+                    <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+                      <input type="password" class="form-control" name="password" placeholder="Enter password" id="signupPassowrd"required>
+                      <span class="input-group-text"><i class="bi bi-eye-slash" aria-hidden="true" onclick="showpassword('signupPassowrd',this.id)" id="signupEyeIcon"></i></span>
+                  </div>
+                </div>
+                <div class="form-outline input-group-lg">
+                    <label class="col-sm-4 col-form-label col-form-label-lg" >First Name</label>
+                    <div class="input-group input-group-lg border border-primary rounded"> 
+                      <span class="input-group-text"><i class="bi bi-person-lines-fill"></i></span>
+                      <input type="text" class="form-control" placeholder="Enter your first name" name="first_name" required>
+                    </div>
+                </div>
+                <div class="form-outline input-group-lg">
+                    <label class="col-sm-4 col-form-label col-form-label-lg" >Last Name</label>
+                    <div class="input-group input-group-lg border border-primary rounded"> 
+                      <span class="input-group-text"><i class="bi bi-person-lines-fill"></i></span>
+                      <input type="text" class="form-control" placeholder="Enter your last name" name="last_name" required>
+                    </div>
+                </div>
+                <div class="form-outline input-group-lg mb-2">
+                  <label class="col-sm-4 col-form-label col-form-label-lg" >Address</label>
+                    <div class="input-group input-group-lg border border-primary rounded"> 
+                      <span class="input-group-text"><i class="bi bi-geo-alt-fill"></i></span>  
+                      <input type="text" class="form-control" placeholder="Enter your address" name="address" required>
+                    </div>
+                </div>
+      
+                <div class="input-group input-group-lg col-12">
+                  <button class="btn btn-primary btn-block col-12" type="button" onclick="submitForm('/signup','signupForm')">Sign up</button> 
+                </div>
+                <div class="input-group input-group-lg col-12 justify-content-center">
+                  <a href="#" type="button" onclick="clickSignin()">Sign in</a> 
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    <!-- End Forms Modal -->
+    <!--  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> -->
+  </body>
+  <footer class="py-3 bottom-100 w-100 bg-gradient" style="background-color: #1B2430;"> 
+    <p class="text-center text-white">© 2022 ShareWwaffar</p>
+  </footer>
+</html>
+

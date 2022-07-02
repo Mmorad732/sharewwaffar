@@ -15,13 +15,11 @@ def process_text(text):
     text=text.lower()
     return text
  
-
 def index_from_id(df,id):
     return df[df['id']==id].index.values[0]
 
 def recommend(df,id):
     return featureMatrix(df,id)
-
 
 def featureMatrix(df,id):
     df['features'] = df.apply(concatenate_features,axis=1)
