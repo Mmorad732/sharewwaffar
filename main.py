@@ -21,12 +21,12 @@ templates = Jinja2Templates(directory="Admin_pages/")
 app = FastAPI()
 app.mount("/static", StaticFiles(directory=pkg_resources.resource_filename(__name__, 'static')), name="static")
 app.add_middleware(
-    # HTTPSRedirectMiddleware
-    CORSMiddleware,
-    allow_origins= ["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"]
+    HTTPSRedirectMiddleware
+    # CORSMiddleware,
+    # allow_origins= ["*"],
+    # allow_credentials=True,
+    # allow_methods=["*"],
+    # allow_headers=["*"]
 )
 
 # User
