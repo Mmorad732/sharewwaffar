@@ -422,7 +422,6 @@ async function getListItems(link)
             himCard['button'] = deleteButton;
             for (k in himCard){html += himCard[k];}
         }
-        window.alert(productAlert.innerHTML);
         element.innerHTML = html+
                             '<i class="bi bi-x-lg position-absolute end-0" id="closeProductModal"'+ 
                             'data-bs-dismiss="modal" aria-label="Close"></i>';
