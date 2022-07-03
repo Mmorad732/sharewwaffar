@@ -330,7 +330,7 @@ function showProduct(id)
 {
     var modalBody = document.getElementById("productModalBody");
     var productAlert = document.getElementById('productAlert');
-    productAlert.innerText = '';
+    if (productAlert.innerText != ''){productAlert.innerText = '';}
     var productCard = document.getElementById(id);
     productCard.classList.remove('productCard');
     modalBody.innerHTML = productCard.innerHTML+'<i class="bi bi-x-lg position-absolute end-0" data-bs-dismiss="modal" aria-label="Close"></i>';
@@ -381,7 +381,8 @@ async function getListItems(link)
 {
     var element = document.getElementById("productModalBody");
     var productAlert = document.getElementById('productAlert');
-    productAlert.innerText = '';
+    if (productAlert.innerText != ''){productAlert.innerText = '';}
+    window.alert(productAlert);
     element.innerHTML='';
     var deleteButton = '';
     var url= host + '/'+link;
@@ -433,6 +434,7 @@ async function getListItems(link)
             location.reload(true);
         }
         element.innerHTML = '<i class="bi bi-x-lg position-absolute end-0" id="closeProductModal" data-bs-dismiss="modal" aria-label="Close"></i>';
+        element.appendChild(productAlert);
         alertMsg('mainAlert',y)
     }
 }
