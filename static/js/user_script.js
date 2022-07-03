@@ -535,6 +535,10 @@ async function getNotifications()
     var x = await fetch(url,{method: 'POST'});
     var y = await x.json();
     var html = "";
+    var productAlert = document.createElement('div');
+    productAlert.id = "productAlert";
+    productAlert.role = "alert";
+    productAlert.style.visibility = "hidden";
     if(y['Value']===true)
     {
         
@@ -545,8 +549,8 @@ async function getNotifications()
         }
         element.innerHTML = html+
                             '<i class="bi bi-x-lg position-absolute end-0" id="closeProductModal"'+ 
-                            'data-bs-dismiss="modal" aria-label="Close"></i>'+
-                            alert.innerHTML;
+                            'data-bs-dismiss="modal" aria-label="Close"></i>';
+        element.appendChild(productAlert);
     }
     else
     {
@@ -557,6 +561,7 @@ async function getNotifications()
         }
         
         element.innerHTML = '<i class="bi bi-x-lg position-absolute end-0" id="closeProductModal" data-bs-dismiss="modal" aria-label="Close"></i>';
+        element.appendChild(productAlert);
         alertMsg('mainAlert',y)
         
         
