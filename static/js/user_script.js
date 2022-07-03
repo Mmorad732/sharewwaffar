@@ -329,8 +329,6 @@ function closeAlert(id)
 function showProduct(id)
 {
     var modalBody = document.getElementById("productModalBody");
-    var productAlert = document.getElementById('productAlert');
-    if (productAlert.innerText != ''){productAlert.innerText = '';}
     var productCard = document.getElementById(id);
     productCard.classList.remove('productCard');
     modalBody.innerHTML = productCard.innerHTML+'<i class="bi bi-x-lg position-absolute end-0" data-bs-dismiss="modal" aria-label="Close"></i>';
@@ -355,18 +353,17 @@ function showProduct(id)
     var addWLButton = document.createElement('span');
     addWLButton.setAttribute('onclick',`addToWishList(${id})`);
     addWLButton.classList = 'input-group-text bi bi-bag-heart-fill';
-    var alertMsg = document.createElement('div');
-    alertMsg.id = "productAlert";
-    alertMsg.role = "alert";
-    alertMsg.style.visibility = "hidden"; 
+    var productAlert = document.createElement('div');
+    productAlert.id = "productAlert";
+    productAlert.role = "alert";
+    productAlert.style.visibility = "hidden"; 
     wishListGroup.appendChild(addWLButton);
     cartGroup.appendChild(inputNumber);
     cartGroup.appendChild(addCartButton);
     containter.append(cartGroup);
     containter.append(wishListGroup);
-    modalBody.appendChild(alertMsg);
+    modalBody.appendChild(productAlert);
     modalBody.appendChild(containter);
-    modalBody.append(productAlert);
     productCard.classList.add('productCard');
 }
 function clickSignin()
@@ -380,15 +377,16 @@ function clickSignup()
 async function getListItems(link)
 {
     var element = document.getElementById("productModalBody");
-    var productAlert = document.getElementById('productAlert');
-    if (productAlert.innerText != ''){productAlert.innerText = '';}
-    window.alert(productAlert);
     element.innerHTML='';
     var deleteButton = '';
     var url= host + '/'+link;
     var x = await fetch(url,{method: 'POST'});
     var y = await x.json();
     var html = "";
+    var productAlert = document.createElement('div');
+    productAlert.id = "productAlert";
+    productAlert.role = "alert";
+    productAlert.style.visibility = "hidden";
     if(y['Value']===true)
     {
         for (r in y['Result'])
@@ -426,6 +424,7 @@ async function getListItems(link)
         element.innerHTML = html+
                             '<i class="bi bi-x-lg position-absolute end-0" id="closeProductModal"'+ 
                             'data-bs-dismiss="modal" aria-label="Close"></i>';
+        
         element.appendChild(productAlert);
     }else
     {
@@ -435,8 +434,9 @@ async function getListItems(link)
         }
         element.innerHTML = '<i class="bi bi-x-lg position-absolute end-0" id="closeProductModal" data-bs-dismiss="modal" aria-label="Close"></i>';
         element.appendChild(productAlert);
-        alertMsg('mainAlert',y)
+        alertMsg('mainAlert',y);
     }
+   
 }
 async function addToCart(link,id)
 {   
