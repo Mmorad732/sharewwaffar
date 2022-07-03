@@ -110,9 +110,6 @@ async function getUser()
     }
     
 }
-async function appendBody(html){
-    document.body.innerHTML += html
-}
 function showpassword(value,id)
 {
     var elem =  document.getElementById(value);
@@ -332,6 +329,8 @@ function closeAlert(id)
 function showProduct(id)
 {
     var modalBody = document.getElementById("productModalBody");
+    var productAlert = document.getElementById('productAlert');
+    productAlert.innerText = '';
     var productCard = document.getElementById(id);
     productCard.classList.remove('productCard');
     modalBody.innerHTML = productCard.innerHTML+'<i class="bi bi-x-lg position-absolute end-0" data-bs-dismiss="modal" aria-label="Close"></i>';
@@ -367,6 +366,7 @@ function showProduct(id)
     containter.append(wishListGroup);
     modalBody.appendChild(alertMsg);
     modalBody.appendChild(containter);
+    modalBody.append(productAlert);
     productCard.classList.add('productCard');
 }
 function clickSignin()
@@ -380,6 +380,8 @@ function clickSignup()
 async function getListItems(link)
 {
     var element = document.getElementById("productModalBody");
+    var productAlert = document.getElementById('productAlert');
+    productAlert.innerText = '';
     element.innerHTML='';
     var deleteButton = '';
     var url= host + '/'+link;
@@ -388,7 +390,6 @@ async function getListItems(link)
     var html = "";
     if(y['Value']===true)
     {
-        
         for (r in y['Result'])
         {
             himCard['wrap_id'] = JSON.stringify(y['Result'][r]['id']);
@@ -421,7 +422,11 @@ async function getListItems(link)
             himCard['button'] = deleteButton;
             for (k in himCard){html += himCard[k];}
         }
-        element.innerHTML = html+'<i class="bi bi-x-lg position-absolute end-0" id="closeProductModal" data-bs-dismiss="modal" aria-label="Close"></i>';
+        window.alert(productAlert.innerHTML);
+        element.innerHTML = html+
+                            '<i class="bi bi-x-lg position-absolute end-0" id="closeProductModal"'+ 
+                            'data-bs-dismiss="modal" aria-label="Close"></i>';
+        element.appendChild(productAlert);
     }else
     {
         if(y['Message'].toLocaleLowerCase()==='unauthorized')
@@ -522,6 +527,7 @@ function closeModal()
 }
 async function getNotifications()
 {
+    
     var element = document.getElementById("productModalBody");
     element.innerHTML='';
     var url= host + '/notifications';
@@ -530,12 +536,16 @@ async function getNotifications()
     var html = "";
     if(y['Value']===true)
     {
+        
         for(var i in y['Result'])
         {   
             notifyCard['Message'] = y['Result'][i]['message'];
             for (k in notifyCard){html += notifyCard[k];}
         }
-        element.innerHTML = html+'<i class="bi bi-x-lg position-absolute end-0" id="closeProductModal" data-bs-dismiss="modal" aria-label="Close"></i>';
+        element.innerHTML = html+
+                            '<i class="bi bi-x-lg position-absolute end-0" id="closeProductModal"'+ 
+                            'data-bs-dismiss="modal" aria-label="Close"></i>'+
+                            alert.innerHTML;
     }
     else
     {
