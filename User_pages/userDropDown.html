@@ -1,5 +1,12 @@
 <li>
-    <a class="dropdown-item" href="#"><span class="bi bi-chat-square"></span> Notifications</a>
+    <strong><p class="dropdown-header text-center text-dark" id="UserName"></p></strong>
+</li>
+<li>
+    <p class="dropdown-header text-center text-dark" id="UserEmail"></p>
+</li>
+<li><hr class="dropdown-divider"></li>
+<li>
+    <a class="dropdown-item" href="#" onclick="getNotifications()" data-bs-toggle="modal" data-bs-target="#productModal"><span class="bi bi-chat-square"></span> Notifications</a>
 </li>
 <li>
     <a class="dropdown-item" href="#" onclick="getListItems('wishlistitems')" data-bs-toggle="modal" data-bs-target="#productModal" id="userwishlistbutton"><span class="bi bi-bag-heart"></span> Wishlist</a>

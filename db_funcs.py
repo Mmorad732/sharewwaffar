@@ -341,13 +341,16 @@ async def deleteById(connection, table , id):
                     await deleteIm(result['image'])
                 except conn.Error as e:
                     return {'Value':False, 'Message':'Error'}
-            # elif table.lower() == 'user':
-            #     userproducts = await getListItems(await db_connect(),'history',id)
-            #     print(userproducts)
-            #     return "okk"
-                # if(userproducts['Value']):
-                #     for i in userproducts[]:
-                
+            elif table.lower() == 'user':
+                userproducts = await getListItems(await db_connect(),'history',id)
+                if(userproducts['Value']):
+                    for i in userproducts['Result']:
+                        content= {'prod_id':i['id'],'quantity':i['quantity']}
+                        if i['wishlist'] == 1:
+                            content['column'] = 'wl_count' 
+                        elif i['cart'] == 1:
+                            content['column'] = 'cart_count'
+                        await productIncDec(await db_connect(),content,'-')
             cursor.execute(delete_query,[id])
             connection.commit()
             row_count = cursor.rowcount
@@ -359,6 +362,7 @@ async def deleteById(connection, table , id):
             connection.close()
             return {'Value':True, 'Message':"Deleted successfully"}
     except conn.Error as e:
+            print("delete ",e)
             return {'Value':False, 'Message':'Error'}
 
 async def uploadIm(im):
@@ -418,7 +422,7 @@ async def getFromList(connection,table,content):
         return {'Value':False, 'Message':'Error'}
 
 async def productIncDec(connection,content,op):
-    update_query = 'UPDATE product SET '+ content['column']+' = '+content['column']+' '+op +' '+content['quantity'] + ' WHERE id = %s'
+    update_query = 'UPDATE product SET '+ content['column']+' = '+content['column']+' '+op +' '+str(content['quantity']) + ' WHERE id = %s'
     try:
         with connection.cursor() as cursor:
             cursor.execute(update_query,[content['prod_id']])
@@ -432,6 +436,7 @@ async def productIncDec(connection,content,op):
             connection.close()
             return {'Value':True, 'Message':"Product Updated successfully"}
     except conn.Error as e:
+        print(e)
         return {'Value':False, 'Message':'Error'}
 
 async def getListItems(connection,table,user,cond=''):
@@ -439,7 +444,7 @@ async def getListItems(connection,table,user,cond=''):
         with connection.cursor(dictionary=True,buffered=True) as cursor:
             if not bool(cond):
                 cursor.execute(
-                            " SELECT product.id,product.name\
+                            " SELECT product.id,product.name,history.quantity as quantity,history.cart,history.wishlist\
                             FROM history \
                             JOIN product ON history.product = product.id and history.user = %s",[user])
             else:

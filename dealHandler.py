@@ -9,7 +9,7 @@ async def dealShoutOut(product,date):
         date = datetime.strptime(date,'%Y-%m-%d').date()
     except:
         date = date
-    message = 'Buy '+str(offer[0]) +' '+product_query['Result']['name'] +' before '+str(date)+' to get '+str(offer[-2])+' off or buy it with friends and get it as cashback'
+    message = 'Buy '+str(offer[0]) +' '+product_query['Result']['name'] +' before '+str(date)+' to get '+str(offer[-2])+str(offer[-1])+' off or buy it with friends and get it as cashback'
     notificiationList = []
     if interestedUsers['Value']:
         for users in interestedUsers['Result']:

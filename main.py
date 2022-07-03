@@ -21,12 +21,12 @@ templates = Jinja2Templates(directory="Admin_pages/")
 app = FastAPI()
 app.mount("/static", StaticFiles(directory=pkg_resources.resource_filename(__name__, 'static')), name="static")
 app.add_middleware(
-    HTTPSRedirectMiddleware
-    # CORSMiddleware,
-    # allow_origins= ["*"],
-    # allow_credentials=True,
-    # allow_methods=["*"],
-    # allow_headers=["*"]
+    # HTTPSRedirectMiddleware
+    CORSMiddleware,
+    allow_origins= ["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
 )
 
 # User
@@ -43,7 +43,6 @@ async def logout(req:Request):
         resp = RedirectResponse('/',status_code=status.HTTP_302_FOUND)
         if(bool(req.cookies) and 'Token' in req.cookies.keys()):
             resp.delete_cookie('Token')
-        print(resp.headers)
         return resp
     except:
             return {'Value':False,'Meassage':"Error"}
@@ -52,14 +51,18 @@ async def logout(req:Request):
 @app.post('/useroptions')
 async def userOptions(req:Request):
     try:
+        resp = {}
         if bool(req.cookies) and 'Token' in req.cookies.keys():
             tok = t.auth_token(req.cookies['Token'])
             if tok['Value'] and tok['role']==2:
-                resp = HTMLResponse(pkg_resources.resource_string(__name__, 'User_pages/userDropDown.html'))
-                resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
-        else:
-            resp = HTMLResponse(pkg_resources.resource_string(__name__, 'User_pages/guestDropDown.html'))
-        return {'Value':True,'Result':resp}
+                user = await db.getIdFromdb(await db.db_connect(),'User',tok['id'],content='email,first_name,last_name,address,wallet')
+                if(user['Value']):
+                    resp = HTMLResponse(pkg_resources.resource_string(__name__, 'User_pages/userDropDown.html'))
+                    resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
+                    return {'Value':True,'Result':resp,'User':user['Result'],'Message':'User'}
+        
+        resp = HTMLResponse(pkg_resources.resource_string(__name__, 'User_pages/guestDropDown.html'))
+        return {'Value':True,'Result':resp, 'Message':'Guest'}
     except:
         return {'Value':False,'Message':'Error'}
 
@@ -534,11 +537,12 @@ async def recommends(req:Request):
                             if len(recommends)>0:
                                 result = []
                                 for prod in products['Result']:
-                                    if int(prod['id']) in recommends and not int(prod['id']) in intrests:
+                                    if int(prod['id']) in recommends and (not int(prod['id']) in intrests):
                                         result.append(prod)
-                                resp = JSONResponse(content = {'Value':True,'Result': result}) 
-                                resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
-                                return resp
+                                if len(result)>0:        
+                                    resp = JSONResponse(content = {'Value':True,'Result': result}) 
+                                    resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
+                                    return resp
                     else:
                         resp = JSONResponse(content = {'Value':False,'Message': "Error"}) 
                         resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
@@ -624,7 +628,7 @@ async def getNotifications(req:Request):
                     resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                     return resp 
                 else:
-                    resp = JSONResponse(content = {'Value':notifications['Value'],'Result': notifications['Message']}) 
+                    resp = JSONResponse(content = {'Value':notifications['Value'],'Message': notifications['Message']}) 
                     resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
                     return resp 
 

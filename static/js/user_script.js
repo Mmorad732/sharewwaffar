@@ -71,8 +71,17 @@ var himCard =
     row_end : '</div>',
     wrap_end:'</div>'
 };
+var notifyCard={
+    wrap:'<div class="card">',
+    header: '<div class="card-header"> Execlusive Offer</div>',
+    body:'<div class="card-body"> <p class="card-text">',
+    Message:'',
+    Message_end:'</p>',
+    body_end:'</div>',
+    wrap_end:'</div>'
+};
 const host = window.location.protocol + "//" +window.location.host;
-
+var user = '';
 async function data()
 {
     await Promise.all([getList('Category','categories'),
@@ -90,6 +99,13 @@ async function getUser()
     if(y['Value']===true)
     {
         document.getElementById('UserDropDown').innerHTML=y['Result']['body'];
+        if(y['Message'].toLocaleLowerCase()==='user')
+        {
+            user =  y['User']
+            document.getElementById('UserName').innerHTML = user['first_name']+' '+user['last_name'];
+            document.getElementById('UserEmail').innerHTML = user['email'];
+        }
+        
         
     }
     
@@ -288,6 +304,7 @@ async function submitForm(route,id)
 function logoutFormSubmit()
 {
     document.getElementById('logoutForm').submit();
+    user = ''
 }
 async function alertMsg(id,input)
 {
@@ -417,6 +434,7 @@ async function getListItems(link)
 }
 async function addToCart(link,id)
 {   
+    if(user != ''){
         var quantity = document.getElementById('quantityInput').value;
         var data = {'prod_id':id,'quantity':quantity};
         var url= host + '/'+link;
@@ -429,19 +447,23 @@ async function addToCart(link,id)
         {
             if (y['Message'].toLocaleLowerCase()==='unauthorized')
             {
-                clickSignin();
+                if(user != ''){user='';logoutFormSubmit();}
+                
             }
-            else{alertMsg('mainAlert',y);}
+            else{alertMsg('productAlert',y);}
         }else
         {
-            alertMsg('mainAlert',y);
+            alertMsg('productAlert',y);
         }
-    
-
+    }
+    else
+    {
+        clickSignin();
+    }
 }
 async function addToWishList(id)
 {   
-    
+    if(user != ''){
         var data = {'prod_id':id};
         var url= host + '/addwishlistitem';
         var x = await fetch(url,{
@@ -454,8 +476,8 @@ async function addToWishList(id)
         {
             if (y['Message'].toLocaleLowerCase()==='unauthorized')
             {
-                    // location.reload(true);
-                    clickSignin();
+
+                if(user != ''){user='';logoutFormSubmit();}
                
             }
             else{alertMsg('productAlert',y);}
@@ -463,7 +485,10 @@ async function addToWishList(id)
         {
             alertMsg('productAlert',y);
         }
- 
+    }else
+    {
+        clickSignin();
+    }
 
 }
 async function deleteItem(link,id)
@@ -481,10 +506,7 @@ async function deleteItem(link,id)
     {
         if (y['Message'].toLocaleLowerCase()==='unauthorized')
         {
-        
-            // location.reload(true);
-            clickSignin();
-            
+            if(user != ''){user='';logoutFormSubmit();}
         }
         else{alertMsg('mainAlert',y);}
     }else
@@ -498,10 +520,39 @@ function closeModal()
 {
     document.getElementById('closeProductModal').click();
 }
-// async function getNotifications()
-// {
+async function getNotifications()
+{
+    var element = document.getElementById("productModalBody");
+    element.innerHTML='';
+    var url= host + '/notifications';
+    var x = await fetch(url,{method: 'POST'});
+    var y = await x.json();
+    var html = "";
+    if(y['Value']===true)
+    {
+        for(var i in y['Result'])
+        {   
+            window.alert(i);
+            notifyCard['Message'] = y['Result'][i]['message'];
+            for (k in notifyCard){html += notifyCard[k];}
+        }
+        element.innerHTML = html+'<i class="bi bi-x-lg position-absolute end-0" id="closeProductModal" data-bs-dismiss="modal" aria-label="Close"></i>';
+    }
+    else
+    {
+        if(y['Message'].toLocaleLowerCase()==='unauthorized')
+        {
+            if(user != ''){user='';logoutFormSubmit();}
+            
+        }
+        
+        element.innerHTML = '<i class="bi bi-x-lg position-absolute end-0" id="closeProductModal" data-bs-dismiss="modal" aria-label="Close"></i>';
+        alertMsg('mainAlert',y)
+        
+        
+    }    
 
-// }
+}
 async function getIndexProducts(link, col)
 {
     
