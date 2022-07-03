@@ -532,7 +532,6 @@ async function getNotifications()
     {
         for(var i in y['Result'])
         {   
-            window.alert(i);
             notifyCard['Message'] = y['Result'][i]['message'];
             for (k in notifyCard){html += notifyCard[k];}
         }
