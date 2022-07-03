@@ -33,6 +33,12 @@ app.add_middleware(
 @app.get('/')
 async def user(req:Request):
     try:
+        if bool(req.cookies) and 'Token' in req.cookies.keys():
+            tok = t.auth_token(req.cookies['Token'])
+            if tok['Value']:
+                resp = HTMLResponse(pkg_resources.resource_string(__name__, 'User_pages/index.html'))
+                resp.set_cookie(key="Token",value=req.cookies['Token'],secure=True,httponly=True)
+                return resp
         return HTMLResponse(pkg_resources.resource_string(__name__, 'User_pages/index.html'))
     except:
             return {'Value':False,'Meassage':"Error"} 
